@@ -11,6 +11,9 @@ import numpy as np
 import cifar10_utils
 from mlp_tf import MLP
 from tensorflow.examples.tutorials.mnist import input_data
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import itertools
 
 # Default constants
 LEARNING_RATE_DEFAULT = 2e-3
@@ -73,6 +76,43 @@ def initialize_parameters():
     #OPTIMIZER_DICT['sgd'] = [1,2,3]
 
 
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+    plt.show()
+
+
 def train():
   """
   Performs training and evaluation of MLP model. Evaluate your model each 100 iterations
@@ -80,6 +120,14 @@ def train():
   """
   ### DO NOT CHANGE SEEDS!
   # Set the random seeds for reproducibility
+  import pickle
+  with open(FLAGS.data_dir + '/batches.meta', 'rb') as fo:
+      label_names = pickle.load(fo, encoding='bytes')
+      label_names = label_names[b'label_names']
+      label_names = [name.decode('UTF-8') for name in label_names]
+
+
+
 
   tf.set_random_seed(42)
   np.random.seed(42)
@@ -106,6 +154,9 @@ def train():
     n_classes = 10
     norm_const = 1
 
+  #Adam: 0.001, SGD: 0.1
+  FLAGS.learning_rate = 0.001
+  FLAGS.max_steps = 5000
 
   # tf Graph input
   X = tf.placeholder("float", [None, n_input], )
@@ -134,15 +185,15 @@ def train():
   sess = tf.Session()
   sess.run(init)
 
-  FLAGS.learning_rate = 0.1
-  FLAGS.max_steps = 2000
   for step in range(FLAGS.max_steps):
     x, y = dataset.train.next_batch(FLAGS.batch_size)
     x = np.reshape(x, (-1, n_input)) / norm_const
 
-    logits_value = sess.run(logits, feed_dict={X: x, train_mode: True   })
-    loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
-    sess.run(train_step, feed_dict={X: x, Y: y, train_mode: True })
+    # logits_value = sess.run(logits, feed_dict={X: x, train_mode: True   })
+    # loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
+    # sess.run(train_step, feed_dict={X: x, Y: y, train_mode: True })
+
+    [logits_value, loss_value, _] = sess.run([logits, loss, train_step], feed_dict={X: x, Y: y, train_mode: True })
     #sess.run(train_step, feed_dict={loss: loss_value})
 
 
@@ -151,10 +202,11 @@ def train():
       x = np.reshape(x, (-1, n_input)) / norm_const
       y = dataset.test.labels
 
-      logits_value = sess.run(logits, feed_dict={X: x, train_mode: False})
-      loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
+      # logits_value = sess.run(logits, feed_dict={X: x, train_mode: False})
+      # loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
+      # accuracy_value = sess.run(accuracy, feed_dict={logits: logits_value, Y: y, train_mode: False})
 
-      accuracy_value = sess.run(accuracy, feed_dict={logits: logits_value, Y: y, train_mode: False})
+      [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy], feed_dict={X: x, Y: y, train_mode: False})
 
       summ = sess.run(summaries, feed_dict={accuracy:accuracy_value, loss: loss_value})
       writer.add_summary(summ, global_step=step)
@@ -167,12 +219,18 @@ def train():
   x = np.reshape(x, (-1, n_input))
   y = dataset.test.labels
 
-  logits_value = sess.run(logits, feed_dict={X: x, train_mode:False})
-  loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
-  accuracy_value = sess.run(accuracy, feed_dict={logits: logits_value, Y: y, train_mode: False})
-
+  [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],feed_dict={X: x, Y: y, train_mode: False})
   print('Final: loss: %f, acc: %f' % (loss_value, accuracy_value))
 
+  y_pred = np.argmax(logits_value, axis = 1)
+  y_true = np.argmax(y, axis = 1)
+  conf_mat = confusion_matrix(y_true= y_true, y_pred= y_pred)
+
+
+  # print(label_names)
+  # print(conf_mat)
+
+  plot_confusion_matrix(conf_mat,label_names)
 
 
 

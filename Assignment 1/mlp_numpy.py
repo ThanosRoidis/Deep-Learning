@@ -101,11 +101,6 @@ class MLP(object):
     return logits
 
 
-  # def log_sum_exp(self,x):
-  #     a = np.max(x, axis = 1)
-  #     return a + np.log(np.sum(np.exp(x - a), axis = 1))
-
-
   def softmax(self, x):
       m = np.max(x, axis = 1).reshape(x.shape[0],1)
       q = np.exp(x - m)
@@ -158,10 +153,9 @@ class MLP(object):
 
 
     reg_loss = 0
-    l = 0.5
     for W in self.W:
-        reg_loss += np.sum(W)
-    reg_loss = l * reg_loss / (2 * n)
+        reg_loss += np.linalg.norm(W) ** 2
+    reg_loss = self.weight_decay * reg_loss / (2)
 
     full_loss = loss + reg_loss
     
@@ -192,8 +186,7 @@ class MLP(object):
 
         self.deltas.insert(0, delta)
         
-        
-    a = flags[0] 
+
     
     for layer in range(len(self.W)):
         
@@ -203,11 +196,12 @@ class MLP(object):
         dW = np.dot(s.T , d) / d.shape[0]
         db = np.sum(d, axis = 0) / d.shape[0]
 
-        self.W[layer] = self.W[layer] - a * dW
-        self.b[layer] = self.b[layer] - a * db
-
+        #self.W[layer] = self.W[layer] - flags.learning_rate * dW
         #Formula for L2 reg (dW is without regularization)
-        # W = W (1 - a * lamb) - a * dW 
+        self.W[layer] = self.W[layer] - flags.learning_rate * (dW + self.weight_decay * self.W[layer])
+
+        self.b[layer] = self.b[layer] - flags.learning_rate * db
+
 
 
     return
