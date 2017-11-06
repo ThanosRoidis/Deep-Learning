@@ -65,9 +65,9 @@ def train():
   # plt.imshow(x[0] )
   # plt.show()
 
-  FLAGS.weight_reg_strength = 0.001
+  # FLAGS.weight_reg_strength = 0.001
   FLAGS.learning_rate = 0.1
-  FLAGS.max_steps = 10000
+  # FLAGS.max_steps = 10000
 
   mlp = MLP(n_input, dnn_hidden_units, n_classes,
             weight_decay=FLAGS.weight_reg_strength,

@@ -7,6 +7,10 @@ import os
 
 import tensorflow as tf
 import numpy as np
+from convnet_tf import ConvNet
+
+import cifar10_utils
+from tensorflow.examples.tutorials.mnist import input_data
 
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
@@ -50,16 +54,96 @@ def train():
   """
 
   # Set the random seeds for reproducibility. DO NOT CHANGE.
+
+
   tf.set_random_seed(42)
   np.random.seed(42)
 
-  ########################
-  # PUT YOUR CODE HERE  #
-  ########################
-  raise NotImplementedError
-  ########################
-  # END OF YOUR CODE    #
-  ########################
+  train_cifar = True
+
+  if train_cifar:
+    dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
+    n_input = 3072
+    n_classes = 10
+    norm_const = 255
+  else:
+    dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
+    n_input = 784
+    n_classes = 10
+    norm_const = 1
+
+
+  #Initialize Neural Network / graph
+  X = tf.placeholder("float", [None, 32,32,3] )
+  Y = tf.placeholder("float", [None, n_classes])
+  train_mode = tf.placeholder(tf.bool)
+
+  convnet = ConvNet(n_classes)
+  logits = convnet.inference(X)
+  loss = convnet.loss(logits, Y)
+  train_step = convnet.train_step(loss, FLAGS)
+  accuracy = convnet.accuracy(logits,Y)
+
+  # # Create summary variables
+  # tf.summary.scalar('L', loss)
+  # tf.summary.scalar('acc', accuracy)
+  # writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
+  # summaries = tf.summary.merge_all()
+
+
+  # Initializing the variables and start the session
+  init = tf.global_variables_initializer()
+  sess = tf.Session()
+  sess.run(init)
+
+  # FLAGS.max_steps = 2000
+  for step in range(FLAGS.max_steps):
+    x, y = dataset.train.next_batch(FLAGS.batch_size)
+    x = x / norm_const
+
+    #infenence, loss calcuation and train
+    [logits_value, loss_value, _] = sess.run([logits, loss, train_step], feed_dict={X: x, Y: y, train_mode: True })
+
+    #Show loss/accuracy on train set (current batch)
+    if step % FLAGS.print_freq == 0:
+        accuracy_value = sess.run(accuracy, feed_dict = {logits: logits_value, Y: y})
+        print('step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
+
+    #Show loss/accuracy on test set
+    if step % FLAGS.eval_freq  == 0:
+        # x = dataset.test.images[:2 * FLAGS.batch_size]
+        x = dataset.test.images
+        x = x / norm_const
+        y = dataset.test.labels
+
+        # infenence, loss calcuation and accuracy
+        [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
+                                                              feed_dict={X: x, Y: y, train_mode: False})
+
+        #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
+
+        print('Test:')
+        print('  step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
+
+
+    #Save model
+    if step % FLAGS.checkpoint_freq == 0:
+        pass
+
+  x = dataset.test.images
+  x = x / norm_const
+  y = dataset.test.labels
+
+  # infenence, loss calcuation and accuracy
+  [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
+                                                      feed_dict={X: x, Y: y, train_mode: False})
+
+  #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
+
+  print('Test:')
+  print('  final: loss: %f, acc: %f' % (loss_value, accuracy_value))
+
+
 
 def initialize_folders():
   """

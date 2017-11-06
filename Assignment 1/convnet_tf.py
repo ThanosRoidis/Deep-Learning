@@ -6,6 +6,8 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from tensorflow.contrib.layers import xavier_initializer
+from tensorflow.contrib.layers import l1_regularizer, l2_regularizer
 
 class ConvNet(object):
   """
@@ -52,13 +54,63 @@ class ConvNet(object):
               to evaluate the model.
     """
 
-    ########################
-    # PUT YOUR CODE HERE  #
-    ########################
-    raise NotImplementedError
-    ########################
-    # END OF YOUR CODE    #
-    ########################
+    self.weight_initializer = xavier_initializer()
+    self.weight_regularizer = l2_regularizer(0.001)
+
+    # Convolutional Layer #1
+    conv1 = tf.layers.conv2d(
+      inputs=x,
+      kernel_size=[5, 5],
+      filters=64,
+      strides = [1,1],
+      padding="same",
+      activation=tf.nn.relu)
+
+    # Pooling Layer #1
+    pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[3, 3], strides=[2,2])
+
+    # Convolutional Layer #2 and Pooling Layer #2
+    conv2 = tf.layers.conv2d(
+      inputs=pool1,
+      kernel_size=[5, 5],
+      filters=64,
+      strides = [1,1],
+      padding="same",
+      activation=tf.nn.relu)
+    pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[3, 3], strides=[2,2])
+
+    pool2_flat = tf.contrib.layers.flatten(inputs = pool2)
+
+    #fc1 layer
+    fc1W = tf.get_variable("W1", shape=[pool2_flat.get_shape()[1].value, 384],
+                    initializer=self.weight_initializer,
+                    regularizer=self.weight_regularizer)
+    fc1b = tf.get_variable("b1", shape=[384],
+                        initializer=tf.zeros_initializer())
+
+    fc1l = tf.nn.relu(tf.nn.bias_add(tf.matmul(pool2_flat, fc1W), fc1b))
+
+    #fc2 layer
+    fc2W = tf.get_variable("W2", shape=[384, 192],
+                           initializer=self.weight_initializer,
+                           regularizer=self.weight_regularizer)
+    fc2b = tf.get_variable("b2", shape=[192],
+                           initializer=tf.zeros_initializer())
+
+    fc2l = tf.nn.relu(tf.nn.bias_add(tf.matmul(fc1l, fc2W), fc2b))
+
+
+
+    #fc3 layer
+    fc3W = tf.get_variable("W3", shape=[192, self.n_classes],
+                           initializer=self.weight_initializer,
+                           regularizer=self.weight_regularizer)
+    fc3b = tf.get_variable("b3", shape=[self.n_classes],
+                           initializer=tf.zeros_initializer())
+
+    logits = tf.nn.bias_add(tf.matmul(fc2l, fc3W), fc3b)
+
+
     return logits
 
   def loss(self, logits, labels):
@@ -85,13 +137,7 @@ class ConvNet(object):
       loss: scalar float Tensor, full loss = cross_entropy + reg_loss
     """
 
-    ########################
-    # PUT YOUR CODE HERE  #
-    ########################
-    raise NotImplementedError
-    ########################
-    # END OF YOUR CODE    #
-    ########################
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
 
     return loss
 
@@ -106,13 +152,11 @@ class ConvNet(object):
       train_step: TensorFlow operation to perform one training step
     """
 
-    ########################
-    # PUT YOUR CODE HERE  #
-    #######################
-    raise NotImplementedError
-    ########################
-    # END OF YOUR CODE    #
-    #######################
+
+    optimizer = tf.train.AdamOptimizer(learning_rate = flags.learning_rate)
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)
+
+    train_step = optimizer.minimize(loss)
 
     return train_step
 
@@ -135,13 +179,8 @@ class ConvNet(object):
                 i.e. the average correct predictions over the whole batch.
     """
 
-    ########################
-    # PUT YOUR CODE HERE  #
-    ########################
-    raise NotImplementedError
-    ########################
-    # END OF YOUR CODE    #
-    ########################
+    correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     return accuracy
 

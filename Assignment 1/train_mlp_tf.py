@@ -155,7 +155,7 @@ def train():
     norm_const = 1
 
   #Adam: 0.001, SGD: 0.1
-  FLAGS.learning_rate = 0.001
+  #FLAGS.learning_rate = 0.001
   FLAGS.max_steps = 5000
 
   # tf Graph input
@@ -164,7 +164,7 @@ def train():
   keep_prob = tf.placeholder(tf.float32)
   train_mode = tf.placeholder(tf.bool)
 
-  mlp = MLP(dnn_hidden_units, n_classes, is_training= train_mode, dropout_rate = 0.2)
+  mlp = MLP(dnn_hidden_units, n_classes, is_training = train_mode, dropout_rate = 0.2)
 
   logits = mlp.inference(X)
   loss = mlp.loss(logits, Y)
