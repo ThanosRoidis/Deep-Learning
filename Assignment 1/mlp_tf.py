@@ -61,7 +61,15 @@ class MLP(object):
 
     return
 
+  def _prep_data_augment(self,image):
+    image = tf.image.random_flip_left_right(image)
+    image = tf.image.random_brightness(image, max_delta=63 / 255.0)
+    image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+    return image
 
+  def _data_augment(self,input_tensor):
+    output_tensor = tf.map_fn(self._prep_data_augment, input_tensor)
+    return output_tensor
 
 
   def inference(self, x):
@@ -96,6 +104,8 @@ class MLP(object):
              to evaluate the model.
     """
 
+    # x = self._data_augment(x)
+
     self.n_input =  x.get_shape()[1].value
 
     # holds [n_input, *n_hidden, n_classes]
@@ -103,43 +113,43 @@ class MLP(object):
     n_all_layers.insert(0, self.n_input)
     n_all_layers.append(self.n_classes)
 
-    keep_prob = tf.placeholder(tf.float32)
 
     # Store layers weight & bias
     weights = []
     biases = []
-    layers = []
+    layers = [x]
 
     for l in range(len(n_all_layers) - 1):
-        print(l)
+        # W = tf.get_variable("W" + str(l + 1), shape=[n_all_layers[l], n_all_layers[l + 1]],
+        #                     initializer=self.weight_initializer,
+        #                     regularizer=self.weight_regularizer)
+        # b = tf.get_variable("b" + str(l + 1), shape=[n_all_layers[l + 1]],
+        #                     initializer= tf.zeros_initializer())
+        # layer = tf.add(tf.matmul(layers[-1], W), b)
 
-        # W = tf.Variable(tf.random_normal([n_all_layers[l], n_all_layers[l + 1]],stddev=0.0001 ))
-        #b = tf.Variable(tf.random_normal([n_all_layers[l + 1]]))
-        W = tf.get_variable("W" + str(l + 1), shape=[n_all_layers[l], n_all_layers[l + 1]],
-                            initializer=self.weight_initializer,
-                            regularizer=self.weight_regularizer)
-        b = tf.get_variable("b" + str(l + 1), shape=[n_all_layers[l + 1]],
-                            initializer= tf.zeros_initializer())
+        layer = tf.contrib.layers.fully_connected(layers[-1], n_all_layers[l + 1],
+                                                  activation_fn=None,
+                                                  weights_initializer=self.weight_initializer,
+                                                  weights_regularizer=self.weight_regularizer,
+                                                  biases_initializer=tf.zeros_initializer(),
+                                                  biases_regularizer=None)
 
+        # layer = tf.contrib.layers.batch_norm(layer,
+        #                                   center=True, scale=True,
+        #                                   is_training=self.is_training)
 
-        if l == 0:
-          layer = tf.add(tf.matmul(x, W), b)
-        else:
-          layer = tf.add(tf.matmul(layers[-1], W), b)
-
-
+        #Apply dropout and activation function on all the layers but the last one
         if l != len(n_all_layers) - 2:
           layer = self.activation_fn(layer)
-
-          #layer = tf.nn.dropout(layer, keep_prob)
           layer = tf.cond(self.is_training, lambda: tf.nn.dropout(layer, 1 - self.dropout_rate),lambda: layer)
 
-        weights.append(W)
-        biases.append(b)
+          # layer = tf.cond(self.is_training, lambda: tf.nn.dropout(layer, 1 - self.dropout_rate),lambda: (1-self.dropout_rate) * layer)
+
+        # weights.append(W)
+        # biases.append(b)
         layers.append(layer)
 
 
-    self.keep_prob = keep_prob
     self.weights = weights
     self.biases = biases
     self.layers = layers

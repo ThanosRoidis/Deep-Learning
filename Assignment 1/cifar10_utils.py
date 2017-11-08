@@ -101,6 +101,7 @@ def preprocess_cifar10_data(X_train_raw, Y_train_raw, X_test_raw, Y_test_raw):
   X_train -= mean_image
   X_test -= mean_image
 
+
   return X_train, Y_train, X_test, Y_test
 
 def dense_to_one_hot(labels_dense, num_classes):

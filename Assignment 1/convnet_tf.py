@@ -9,6 +9,13 @@ import tensorflow as tf
 from tensorflow.contrib.layers import xavier_initializer
 from tensorflow.contrib.layers import l1_regularizer, l2_regularizer
 
+
+def augment_image(image):
+  image = tf.image.random_flip_left_right(image)
+  image = tf.image.random_brightness(image, max_delta=63 / 255.0)
+  image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+  return image
+
 class ConvNet(object):
   """
   This class implements a convolutional neural network in TensorFlow.
@@ -16,7 +23,7 @@ class ConvNet(object):
   in inference.
   """
 
-  def __init__(self, n_classes = 10):
+  def __init__(self, n_classes, is_training):
     """
     Constructor for an ConvNet object. Default values should be used as hints for
     the usage of each parameter.
@@ -26,6 +33,8 @@ class ConvNet(object):
                       output dimensions of the ConvNet.
     """
     self.n_classes = n_classes
+    self.is_training = is_training
+
 
   def inference(self, x):
     """
@@ -57,9 +66,14 @@ class ConvNet(object):
     self.weight_initializer = xavier_initializer()
     self.weight_regularizer = l2_regularizer(0.001)
 
+    X = tf.cond(self.is_training, lambda: tf.map_fn(augment_image, x),lambda: x)
+
+    # x2 = self._data_augment(x)
+    # x = self._data_augment(x)
+
     # Convolutional Layer #1
     conv1 = tf.layers.conv2d(
-      inputs=x,
+      inputs=X,
       kernel_size=[5, 5],
       filters=64,
       strides = [1,1],
@@ -82,33 +96,60 @@ class ConvNet(object):
     pool2_flat = tf.contrib.layers.flatten(inputs = pool2)
 
     #fc1 layer
-    fc1W = tf.get_variable("W1", shape=[pool2_flat.get_shape()[1].value, 384],
-                    initializer=self.weight_initializer,
-                    regularizer=self.weight_regularizer)
-    fc1b = tf.get_variable("b1", shape=[384],
-                        initializer=tf.zeros_initializer())
+    # fc1W = tf.get_variable("W1", shape=[pool2_flat.get_shape()[1].value, 384],
+    #                 initializer=self.weight_initializer,
+    #                 regularizer=self.weight_regularizer)
+    # fc1b = tf.get_variable("b1", shape=[384],
+    #                     initializer=tf.zeros_initializer())
+    # fc1l = tf.nn.bias_add(tf.matmul(pool2_flat, fc1W), fc1b)
 
-    fc1l = tf.nn.relu(tf.nn.bias_add(tf.matmul(pool2_flat, fc1W), fc1b))
+    fc1l = tf.contrib.layers.fully_connected(pool2_flat, 384,
+                                              activation_fn=None,
+                                              weights_initializer=self.weight_initializer,
+                                              weights_regularizer=self.weight_regularizer,
+                                              biases_initializer=tf.zeros_initializer(),
+                                              biases_regularizer=None)
+
+    # fc1l = tf.contrib.layers.batch_norm(fc1l, center=True, scale=True, is_training = self.is_training)
+    fc1l = tf.nn.relu(fc1l)
+
 
     #fc2 layer
-    fc2W = tf.get_variable("W2", shape=[384, 192],
-                           initializer=self.weight_initializer,
-                           regularizer=self.weight_regularizer)
-    fc2b = tf.get_variable("b2", shape=[192],
-                           initializer=tf.zeros_initializer())
+    # fc2W = tf.get_variable("W2", shape=[384, 192],
+    #                        initializer=self.weight_initializer,
+    #                        regularizer=self.weight_regularizer)
+    # fc2b = tf.get_variable("b2", shape=[192],
+    #                        initializer=tf.zeros_initializer())
+    # fc2l = tf.nn.bias_add(tf.matmul(fc1l, fc2W), fc2b)
 
-    fc2l = tf.nn.relu(tf.nn.bias_add(tf.matmul(fc1l, fc2W), fc2b))
 
+    fc2l = tf.contrib.layers.fully_connected(fc1l, 192,
+                                             activation_fn=None,
+                                             weights_initializer=self.weight_initializer,
+                                             weights_regularizer=self.weight_regularizer,
+                                             biases_initializer=tf.zeros_initializer(),
+                                             biases_regularizer=None)
+
+    # fc2l = tf.contrib.layers.batch_norm(fc2l, center=True, scale=True, is_training = self.is_training)
+
+    fc2l = tf.nn.relu(fc2l)
 
 
     #fc3 layer
-    fc3W = tf.get_variable("W3", shape=[192, self.n_classes],
-                           initializer=self.weight_initializer,
-                           regularizer=self.weight_regularizer)
-    fc3b = tf.get_variable("b3", shape=[self.n_classes],
-                           initializer=tf.zeros_initializer())
+    # fc3W = tf.get_variable("W3", shape=[192, self.n_classes],
+    #                        initializer=self.weight_initializer,
+    #                        regularizer=self.weight_regularizer)
+    # fc3b = tf.get_variable("b3", shape=[self.n_classes],
+    #                        initializer=tf.zeros_initializer())
+    # logits = tf.nn.bias_add(tf.matmul(fc2l, fc3W), fc3b)
 
-    logits = tf.nn.bias_add(tf.matmul(fc2l, fc3W), fc3b)
+
+    logits = tf.contrib.layers.fully_connected(fc2l, self.n_classes,
+                                             activation_fn=None,
+                                             weights_initializer=self.weight_initializer,
+                                             weights_regularizer=self.weight_regularizer,
+                                             biases_initializer=tf.zeros_initializer(),
+                                             biases_regularizer=None)
 
 
     return logits
@@ -151,7 +192,6 @@ class ConvNet(object):
     Returns:
       train_step: TensorFlow operation to perform one training step
     """
-
 
     optimizer = tf.train.AdamOptimizer(learning_rate = flags.learning_rate)
     #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)

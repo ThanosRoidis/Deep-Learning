@@ -36,7 +36,7 @@ def train():
   np.random.seed(42)
 
 
-  FLAGS.dnn_hidden_units = '100'
+  FLAGS.dnn_hidden_units = '300,100'
   ## Prepare all functions
   # Get number of units in each hidden layer specified in the string such as 100,100
   if FLAGS.dnn_hidden_units:
@@ -45,7 +45,7 @@ def train():
   else:
     dnn_hidden_units = []
 
-  train_cifar = False
+  train_cifar = True
 
   if train_cifar:
     dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)

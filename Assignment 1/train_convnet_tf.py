@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import time
 
 import tensorflow as tf
 import numpy as np
@@ -23,6 +24,37 @@ OPTIMIZER_DEFAULT = 'ADAM'
 DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 LOG_DIR_DEFAULT = './logs/cifar10'
 CHECKPOINT_DIR_DEFAULT = './checkpoints'
+
+
+def augment_image(image):
+    image = tf.image.random_flip_left_right(image)
+    image = tf.image.random_brightness(image, max_delta=63 / 255.0)
+    image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+    return image
+
+def preprocess_data(batch, train_info, data_augment = False):
+    batch = batch / 255
+    # batch = batch / train_info.std
+    if(data_augment):
+        # batch = [_prep_data_augment(image) for image in batch]
+        batch = tf.map_fn(augment_image, batch)
+
+    return batch
+
+
+def extract_info(training_data):
+    """
+
+    :param training_data: an array with the (centered) training data
+    :return: information about the training data (only std so far)
+    """
+    #training data (already centered)
+    INFO = type('INFO', (), {})()
+    N = training_data.shape[0]
+    INFO.std = np.sqrt((1/N) * np.sum(np.power(training_data,2), axis = 0))
+
+    return INFO
+
 
 
 def train():
@@ -65,20 +97,25 @@ def train():
     dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
     n_input = 3072
     n_classes = 10
-    norm_const = 255
+    norm_const = 1
   else:
     dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
     n_input = 784
     n_classes = 10
     norm_const = 1
+  INFO = extract_info(dataset.train.images)
+
+  FLAGS.learning_rate = 0.001
+  FLAGS.batch_size = 128
+  FLAGS.max_steps = 15000
 
 
   #Initialize Neural Network / graph
   X = tf.placeholder("float", [None, 32,32,3] )
   Y = tf.placeholder("float", [None, n_classes])
-  train_mode = tf.placeholder(tf.bool)
+  is_training = tf.placeholder(tf.bool)
 
-  convnet = ConvNet(n_classes)
+  convnet = ConvNet(n_classes = n_classes, is_training = is_training )
   logits = convnet.inference(X)
   loss = convnet.loss(logits, Y)
   train_step = convnet.train_step(loss, FLAGS)
@@ -90,53 +127,72 @@ def train():
   # writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
   # summaries = tf.summary.merge_all()
 
+  saver = tf.train.Saver()
+  model_path = FLAGS.checkpoint_dir + '/cnn_' + time.strftime("%Y%m%d-%H%M")
+  model_name = 'cnn'
+
+
 
   # Initializing the variables and start the session
   init = tf.global_variables_initializer()
   sess = tf.Session()
   sess.run(init)
 
+  # saver.restore(sess, FLAGS.checkpoint_dir + model_path + '/' + model_name + '-10000')
+
+
+
+  prev_accuracy = 0
+
   # FLAGS.max_steps = 2000
   for step in range(FLAGS.max_steps):
     x, y = dataset.train.next_batch(FLAGS.batch_size)
-    x = x / norm_const
+    x = preprocess_data(x, INFO, data_augment = False)
 
     #infenence, loss calcuation and train
-    [logits_value, loss_value, _] = sess.run([logits, loss, train_step], feed_dict={X: x, Y: y, train_mode: True })
+    [logits_value, loss_value, _] = sess.run([logits, loss, train_step], feed_dict={X: x, Y: y, is_training: True })
 
     #Show loss/accuracy on train set (current batch)
     if step % FLAGS.print_freq == 0:
         accuracy_value = sess.run(accuracy, feed_dict = {logits: logits_value, Y: y})
         print('step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
 
+
     #Show loss/accuracy on test set
     if step % FLAGS.eval_freq  == 0:
-        # x = dataset.test.images[:2 * FLAGS.batch_size]
-        x = dataset.test.images
-        x = x / norm_const
+    # if False:
+        x = preprocess_data(dataset.test.images, INFO, data_augment = False)
         y = dataset.test.labels
 
         # infenence, loss calcuation and accuracy
         [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
-                                                              feed_dict={X: x, Y: y, train_mode: False})
+                                                              feed_dict={X: x, Y: y, is_training: False})
 
         #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
 
         print('Test:')
         print('  step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
 
+        if(accuracy_value < prev_accuracy):
+            pass
+            print(' Accuracy decreased, learning rate is decreased to %f', 2)
+        prev_accuracy = accuracy_value
+
+
+
 
     #Save model
     if step % FLAGS.checkpoint_freq == 0:
+        save_path = saver.save(sess, model_path + '/' + model_name, global_step=step)
+        print('Model saved at %s'%(save_path))
         pass
 
-  x = dataset.test.images
-  x = x / norm_const
+  x = preprocess_data(dataset.test.images, INFO, data_augment= False)
   y = dataset.test.labels
 
   # infenence, loss calcuation and accuracy
   [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
-                                                      feed_dict={X: x, Y: y, train_mode: False})
+                                                      feed_dict={X: x, Y: y, is_training: False})
 
   #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
 

@@ -11,14 +11,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="450">
-      <file leaf-file-name="train_mlp_numpy.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="train_mlp_numpy.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_mlp_numpy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="138">
-              <caret line="36" column="0" lean-forward="true" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
-              <folding>
-                <element signature="e#93#131#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="0">
+              <caret line="38" column="32" lean-forward="false" selection-start-line="38" selection-start-column="32" selection-end-line="38" selection-end-column="32" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -26,11 +24,9 @@
       <file leaf-file-name="mlp_numpy.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mlp_numpy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3762">
-              <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
-              <folding>
-                <element signature="e#66#104#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="1032">
+              <caret line="48" column="0" lean-forward="false" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -38,8 +34,8 @@
       <file leaf-file-name="train_mlp_tf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_mlp_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="408">
-              <caret line="212" column="0" lean-forward="false" selection-start-line="212" selection-start-column="0" selection-end-line="213" selection-end-column="78" />
+            <state relative-caret-position="3408">
+              <caret line="154" column="18" lean-forward="false" selection-start-line="154" selection-start-column="18" selection-end-line="154" selection-end-column="18" />
               <folding>
                 <element signature="e#98#136#0" expanded="true" />
               </folding>
@@ -50,9 +46,23 @@
       <file leaf-file-name="mlp_tf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mlp_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="96">
-              <caret line="7" column="23" lean-forward="true" selection-start-line="7" selection-start-column="23" selection-end-line="9" selection-end-column="68" />
-              <folding />
+            <state relative-caret-position="3288">
+              <caret line="143" column="51" lean-forward="false" selection-start-line="143" selection-start-column="44" selection-end-line="143" selection-end-column="51" />
+              <folding>
+                <element signature="e#71#109#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="train_convnet_tf.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="360">
+              <caret line="129" column="25" lean-forward="false" selection-start-line="129" selection-start-column="25" selection-end-line="129" selection-end-column="25" />
+              <folding>
+                <element signature="e#0#38#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -60,22 +70,10 @@
       <file leaf-file-name="convnet_tf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/convnet_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="157" column="0" lean-forward="true" selection-start-line="157" selection-start-column="0" selection-end-line="157" selection-end-column="0" />
+            <state relative-caret-position="792">
+              <caret line="33" column="7" lean-forward="false" selection-start-line="33" selection-start-column="7" selection-end-line="33" selection-end-column="7" />
               <folding>
                 <element signature="e#63#101#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="train_convnet_tf.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="159">
-              <caret line="134" column="25" lean-forward="true" selection-start-line="134" selection-start-column="25" selection-end-line="134" selection-end-column="25" />
-              <folding>
-                <element signature="e#0#38#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -91,7 +89,6 @@
       <find>train</find>
       <find>s</find>
       <find>Dataset</find>
-      <find>mean</find>
       <find>self.train</find>
       <find>keep_</find>
       <find>cifar10</find>
@@ -100,22 +97,30 @@
       <find>cifar</find>
       <find>weight</find>
       <find>print(</find>
+      <find>keep_prob</find>
+      <find>is</find>
+      <find>ConvNet</find>
+      <find>get_cifar10</find>
+      <find>mean</find>
+      <find>FLAGS</find>
+      <find>tf.cond</find>
+      <find>True</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/cifar10_utils.py" />
-        <option value="$PROJECT_DIR$/mlp_numpy.py" />
+        <option value="$PROJECT_DIR$/train_mlp_numpy.py" />
         <option value="$PROJECT_DIR$/mlp_tf.py" />
+        <option value="$PROJECT_DIR$/mlp_numpy.py" />
         <option value="$PROJECT_DIR$/train_mlp_tf.py" />
+        <option value="$PROJECT_DIR$/cifar10_utils.py" />
         <option value="$PROJECT_DIR$/convnet_tf.py" />
         <option value="$PROJECT_DIR$/train_convnet_tf.py" />
-        <option value="$PROJECT_DIR$/train_mlp_numpy.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="992" />
     <option name="y" value="24" />
     <option name="width" value="928" />
@@ -147,8 +152,8 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
       <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -168,7 +173,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.train_mlp_numpy">
+  <component name="RunManager" selected="Python.train_convnet_tf">
     <configuration default="true" type="Python.Ipnb" factoryName="Jupyter Notebook">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -270,8 +275,8 @@
     </list>
     <recent_temporary>
       <list size="4">
-        <item index="0" class="java.lang.String" itemvalue="Python.train_mlp_numpy" />
-        <item index="1" class="java.lang.String" itemvalue="Python.train_convnet_tf" />
+        <item index="0" class="java.lang.String" itemvalue="Python.train_convnet_tf" />
+        <item index="1" class="java.lang.String" itemvalue="Python.train_mlp_numpy" />
         <item index="2" class="java.lang.String" itemvalue="Python.train_mlp_tf" />
         <item index="3" class="java.lang.String" itemvalue="Python.mlp_numpy" />
       </list>
@@ -294,14 +299,15 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
+    <frame x="992" y="24" width="1857" height="1092" extended-state="7" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20808625" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2973545" sideWeight="0.5018868" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2973545" sideWeight="0.18274933" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2973545" sideWeight="0.49811321" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2973545" sideWeight="0.81725067" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -319,18 +325,134 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/.." />
+    </ignored-roots>
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3144">
+          <caret line="143" column="17" lean-forward="false" selection-start-line="143" selection-start-column="17" selection-end-line="143" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1512">
+          <caret line="69" column="27" lean-forward="false" selection-start-line="69" selection-start-column="27" selection-end-line="69" selection-end-column="27" />
+          <folding>
+            <element signature="e#63#101#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_mlp_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3528">
+          <caret line="159" column="0" lean-forward="false" selection-start-line="159" selection-start-column="0" selection-end-line="159" selection-end-column="0" />
+          <folding>
+            <element signature="e#98#136#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3144">
+          <caret line="143" column="17" lean-forward="false" selection-start-line="143" selection-start-column="17" selection-end-line="143" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3624">
+          <caret line="157" column="0" lean-forward="false" selection-start-line="157" selection-start-column="0" selection-end-line="157" selection-end-column="0" />
+          <folding>
+            <element signature="e#63#101#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mlp_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3024">
+          <caret line="132" column="125" lean-forward="false" selection-start-line="132" selection-start-column="125" selection-end-line="132" selection-end-column="125" />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/train_mlp_numpy.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mlp_numpy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4368">
+          <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_mlp_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4800">
+          <caret line="212" column="0" lean-forward="false" selection-start-line="212" selection-start-column="0" selection-end-line="213" selection-end-column="78" />
           <folding>
-            <element signature="e#93#131#0" expanded="true" />
+            <element signature="e#98#136#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mlp_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="7" column="23" lean-forward="true" selection-start-line="7" selection-start-column="23" selection-end-line="9" selection-end-column="68" />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3624">
+          <caret line="157" column="0" lean-forward="true" selection-start-line="157" selection-start-column="0" selection-end-line="157" selection-end-column="0" />
+          <folding>
+            <element signature="e#63#101#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2928">
+          <caret line="134" column="25" lean-forward="true" selection-start-line="134" selection-start-column="25" selection-end-line="134" selection-end-column="25" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_mlp_numpy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
         </state>
       </provider>
     </entry>
@@ -338,9 +460,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4392">
           <caret line="188" column="0" lean-forward="true" selection-start-line="188" selection-start-column="0" selection-end-line="188" selection-end-column="0" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -358,7 +477,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="456">
           <caret line="28" column="47" lean-forward="true" selection-start-line="28" selection-start-column="47" selection-end-line="28" selection-end-column="47" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -366,7 +484,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4296">
           <caret line="185" column="32" lean-forward="true" selection-start-line="185" selection-start-column="32" selection-end-line="185" selection-end-column="32" />
-          <folding />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -374,9 +494,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1320">
           <caret line="65" column="14" lean-forward="false" selection-start-line="65" selection-start-column="14" selection-end-line="65" selection-end-column="14" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -384,9 +501,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4512">
           <caret line="193" column="34" lean-forward="false" selection-start-line="193" selection-start-column="34" selection-end-line="193" selection-end-column="34" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -394,7 +508,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="264">
           <caret line="20" column="37" lean-forward="true" selection-start-line="20" selection-start-column="37" selection-end-line="20" selection-end-column="37" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -402,7 +515,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4440">
           <caret line="191" column="4" lean-forward="false" selection-start-line="191" selection-start-column="4" selection-end-line="191" selection-end-column="4" />
-          <folding />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -420,9 +535,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="624">
           <caret line="36" column="0" lean-forward="false" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -430,9 +542,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="552">
           <caret line="28" column="9" lean-forward="false" selection-start-line="28" selection-start-column="4" selection-end-line="28" selection-end-column="9" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -440,7 +549,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4440">
           <caret line="191" column="4" lean-forward="false" selection-start-line="191" selection-start-column="4" selection-end-line="191" selection-end-column="4" />
-          <folding />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -458,7 +569,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2784">
           <caret line="122" column="53" lean-forward="true" selection-start-line="122" selection-start-column="53" selection-end-line="122" selection-end-column="53" />
-          <folding />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -466,9 +579,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1392">
           <caret line="68" column="44" lean-forward="false" selection-start-line="68" selection-start-column="44" selection-end-line="68" selection-end-column="44" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -476,9 +586,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="960">
           <caret line="45" column="71" lean-forward="true" selection-start-line="40" selection-start-column="4" selection-end-line="45" selection-end-column="71" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -486,7 +593,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2496">
           <caret line="110" column="62" lean-forward="true" selection-start-line="110" selection-start-column="62" selection-end-line="110" selection-end-column="62" />
-          <folding />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -494,9 +603,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1896">
           <caret line="79" column="31" lean-forward="false" selection-start-line="79" selection-start-column="31" selection-end-line="79" selection-end-column="31" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -504,9 +610,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3816">
           <caret line="164" column="31" lean-forward="true" selection-start-line="164" selection-start-column="31" selection-end-line="164" selection-end-column="31" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -514,9 +617,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2568">
           <caret line="107" column="23" lean-forward="false" selection-start-line="107" selection-start-column="23" selection-end-line="107" selection-end-column="23" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -524,9 +624,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1776">
           <caret line="79" column="3" lean-forward="true" selection-start-line="79" selection-start-column="3" selection-end-line="79" selection-end-column="3" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -541,9 +638,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -551,9 +645,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4392">
           <caret line="188" column="8" lean-forward="true" selection-start-line="188" selection-start-column="8" selection-end-line="188" selection-end-column="8" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -561,9 +652,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -578,9 +666,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -595,9 +680,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -615,36 +697,54 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cifar10_utils.py">
+    <entry file="file://$PROJECT_DIR$/train_mlp_numpy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="48">
-          <caret line="21" column="7" lean-forward="true" selection-start-line="21" selection-start-column="7" selection-end-line="21" selection-end-column="7" />
+        <state relative-caret-position="0">
+          <caret line="38" column="32" lean-forward="false" selection-start-line="38" selection-start-column="32" selection-end-line="38" selection-end-column="32" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/train_mlp_tf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="212" column="0" lean-forward="false" selection-start-line="212" selection-start-column="0" selection-end-line="213" selection-end-column="78" />
+        <state relative-caret-position="3408">
+          <caret line="154" column="18" lean-forward="false" selection-start-line="154" selection-start-column="18" selection-end-line="154" selection-end-column="18" />
           <folding>
             <element signature="e#98#136#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/mlp_numpy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1032">
+          <caret line="48" column="0" lean-forward="false" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/mlp_tf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="96">
-          <caret line="7" column="23" lean-forward="true" selection-start-line="7" selection-start-column="23" selection-end-line="9" selection-end-column="68" />
+        <state relative-caret-position="3288">
+          <caret line="143" column="51" lean-forward="false" selection-start-line="143" selection-start-column="44" selection-end-line="143" selection-end-column="51" />
+          <folding>
+            <element signature="e#71#109#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cifar10_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="543">
+          <caret line="123" column="5" lean-forward="false" selection-start-line="123" selection-start-column="5" selection-end-line="123" selection-end-column="5" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/convnet_tf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="157" column="0" lean-forward="true" selection-start-line="157" selection-start-column="0" selection-end-line="157" selection-end-column="0" />
+        <state relative-caret-position="792">
+          <caret line="33" column="7" lean-forward="false" selection-start-line="33" selection-start-column="7" selection-end-line="33" selection-end-column="7" />
           <folding>
             <element signature="e#63#101#0" expanded="true" />
           </folding>
@@ -653,30 +753,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_convnet_tf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="159">
-          <caret line="134" column="25" lean-forward="true" selection-start-line="134" selection-start-column="25" selection-end-line="134" selection-end-column="25" />
+        <state relative-caret-position="360">
+          <caret line="129" column="25" lean-forward="false" selection-start-line="129" selection-start-column="25" selection-end-line="129" selection-end-column="25" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mlp_numpy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3762">
-          <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
-          <folding>
-            <element signature="e#66#104#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_mlp_numpy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="138">
-          <caret line="36" column="0" lean-forward="true" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
-          <folding>
-            <element signature="e#93#131#0" expanded="true" />
           </folding>
         </state>
       </provider>

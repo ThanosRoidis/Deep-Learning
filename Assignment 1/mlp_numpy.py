@@ -42,19 +42,36 @@ class MLP(object):
     n_all_layers.insert(0,n_input)
     n_all_layers.append(n_classes)
     for layer in range(len(n_all_layers)-1):
-        self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = weight_scale ))
-        self.b.append(np.zeros(shape = (1,  n_all_layers[layer + 1]))) 
-        
-        
+        # self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = weight_scale ))
+        self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = 2/n_all_layers[layer] ))
+        # self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = 1/n_all_layers[layer] ))
+        self.b.append(np.zeros(shape = (1,  n_all_layers[layer + 1])))
+
+
 
   def ReLU(self,x):
       return np.maximum(x,0)
-  
+
   def ReLU_d(self,x):
     x2 = x.copy()
     x2[np.where(x2 > 0)] = 1
     x2[np.where(x2 < 0)] = 0
     return x2
+
+  def softmax(self, x):
+      m = np.max(x, axis=1).reshape(x.shape[0], 1)
+      q = np.exp(x - m)
+      Z = np.sum(q, axis=1).reshape(x.shape[0], 1)
+
+      return q / Z
+
+  def softmax2(self, x):
+      a = np.max(x, axis=1).reshape(x.shape[0], 1)
+      logZ = a + np.log(np.sum(np.exp(x - a), axis=1)).reshape(x.shape[0], 1)
+      logp = x - logZ
+      p = np.exp(logp)
+
+      return p
 
   def inference(self, x):
     """
@@ -77,8 +94,6 @@ class MLP(object):
              to evaluate the model.
     """
 
-   
-    
     Z = [x]
     S = [x]
     for layer in range(len(self.W)):
@@ -101,20 +116,6 @@ class MLP(object):
     return logits
 
 
-  def softmax(self, x):
-      m = np.max(x, axis = 1).reshape(x.shape[0],1)
-      q = np.exp(x - m)
-      Z = np.sum(q, axis = 1).reshape(x.shape[0],1)
-      
-      return q / Z
-
-  def softmax2(self, x):
-      a = np.max(x, axis = 1).reshape(x.shape[0],1)
-      logZ = a + np.log(np.sum(np.exp(x - a), axis = 1)).reshape(x.shape[0],1)
-      logp = x - logZ
-      p = np.exp(logp)
-
-      return p
 
   def loss(self, logits, labels):
     """
@@ -180,9 +181,10 @@ class MLP(object):
     
     #Calculate deltas from the last layer to the first (no deltas for the input layer)
     for layer in range(len(self.W) - 1, 0 , -1):
+
         next_delta = self.deltas[0]
-        
-        delta =  self.f_p(self.S[layer]) * np.dot(self.W[layer], next_delta.T).T
+
+        delta =  self.f_p(self.S[layer]) * np.dot(next_delta, self.W[layer].T)
 
         self.deltas.insert(0, delta)
         
@@ -190,16 +192,15 @@ class MLP(object):
     
     for layer in range(len(self.W)):
         
-        s = self.Z[layer] #input to W / output of previous layer
+        z = self.Z[layer] #input to W / output of previous layer
         d = self.deltas[layer] #next layer's delta
         
-        dW = np.dot(s.T , d) / d.shape[0]
+        dW = np.dot(z.T , d) / d.shape[0]
         db = np.sum(d, axis = 0) / d.shape[0]
 
         #self.W[layer] = self.W[layer] - flags.learning_rate * dW
         #Formula for L2 reg (dW is without regularization)
         self.W[layer] = self.W[layer] - flags.learning_rate * (dW + self.weight_decay * self.W[layer])
-
         self.b[layer] = self.b[layer] - flags.learning_rate * db
 
 
