@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 import os
 import time
+import pickle
 
 import tensorflow as tf
 import numpy as np
@@ -16,7 +17,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
 MAX_STEPS_DEFAULT = 15000
-EVAL_FREQ_DEFAULT = 1000
+EVAL_FREQ_DEFAULT = 500
 CHECKPOINT_FREQ_DEFAULT = 5000
 PRINT_FREQ_DEFAULT = 10
 OPTIMIZER_DEFAULT = 'ADAM'
@@ -27,9 +28,8 @@ CHECKPOINT_DIR_DEFAULT = './checkpoints'
 
 
 def augment_image(image):
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.random_brightness(image, max_delta=63 / 255.0)
-    image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+
+
     return image
 
 def preprocess_data(batch, train_info, data_augment = False):
@@ -86,8 +86,6 @@ def train():
   """
 
   # Set the random seeds for reproducibility. DO NOT CHANGE.
-
-
   tf.set_random_seed(42)
   np.random.seed(42)
 
@@ -95,14 +93,20 @@ def train():
 
   if train_cifar:
     dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
-    n_input = 3072
+    n_input = [32,32,3]
     n_classes = 10
-    norm_const = 1
+    norm_const = 255
+    with open(FLAGS.data_dir + '/batches.meta', 'rb') as fo:
+        label_names = pickle.load(fo, encoding='bytes')
+        label_names = label_names[b'label_names']
+        label_names = [name.decode('UTF-8') for name in label_names]
   else:
     dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
-    n_input = 784
+    n_input = [784]
     n_classes = 10
     norm_const = 1
+    label_names = [str(i) for i in range(10)]
+
   INFO = extract_info(dataset.train.images)
 
   FLAGS.learning_rate = 0.001
@@ -111,21 +115,16 @@ def train():
 
 
   #Initialize Neural Network / graph
-  X = tf.placeholder("float", [None, 32,32,3] )
-  Y = tf.placeholder("float", [None, n_classes])
-  is_training = tf.placeholder(tf.bool)
+  X = tf.placeholder("float", [None] + n_input, name='X' )
+  Y = tf.placeholder("float", [None, n_classes], name='labels')
 
-  convnet = ConvNet(n_classes = n_classes, is_training = is_training )
+  convnet = ConvNet(n_classes = n_classes)
   logits = convnet.inference(X)
   loss = convnet.loss(logits, Y)
   train_step = convnet.train_step(loss, FLAGS)
   accuracy = convnet.accuracy(logits,Y)
+  is_training = convnet.is_training
 
-  # # Create summary variables
-  # tf.summary.scalar('L', loss)
-  # tf.summary.scalar('acc', accuracy)
-  # writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
-  # summaries = tf.summary.merge_all()
 
   saver = tf.train.Saver()
   model_path = FLAGS.checkpoint_dir + '/cnn_' + time.strftime("%Y%m%d-%H%M")
@@ -135,8 +134,12 @@ def train():
 
   # Initializing the variables and start the session
   init = tf.global_variables_initializer()
+  summaries = tf.summary.merge_all()
   sess = tf.Session()
+
   sess.run(init)
+  writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
+  writer.add_graph(sess.graph)
 
   # saver.restore(sess, FLAGS.checkpoint_dir + model_path + '/' + model_name + '-10000')
 
@@ -157,6 +160,9 @@ def train():
         accuracy_value = sess.run(accuracy, feed_dict = {logits: logits_value, Y: y})
         print('step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
 
+        # summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value, X: x, is_training: True})
+        # writer.add_summary(summ, global_step=step)
+
 
     #Show loss/accuracy on test set
     if step % FLAGS.eval_freq  == 0:
@@ -168,8 +174,6 @@ def train():
         [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
                                                               feed_dict={X: x, Y: y, is_training: False})
 
-        #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
-
         print('Test:')
         print('  step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
 
@@ -177,6 +181,9 @@ def train():
             pass
             print(' Accuracy decreased, learning rate is decreased to %f', 2)
         prev_accuracy = accuracy_value
+
+        summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value, X: x, is_training: False})
+        writer.add_summary(summ, global_step=step)
 
 
 
@@ -193,8 +200,6 @@ def train():
   # infenence, loss calcuation and accuracy
   [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
                                                       feed_dict={X: x, Y: y, is_training: False})
-
-  #summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value})
 
   print('Test:')
   print('  final: loss: %f, acc: %f' % (loss_value, accuracy_value))

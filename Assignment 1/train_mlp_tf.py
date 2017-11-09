@@ -14,6 +14,11 @@ from tensorflow.examples.tutorials.mnist import input_data
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import itertools
+import pickle
+
+
+from tensorflow.contrib.layers import l1_regularizer, l2_regularizer
+from tensorflow.contrib.layers import xavier_initializer
 
 # Default constants
 LEARNING_RATE_DEFAULT = 2e-3
@@ -41,39 +46,35 @@ LOG_DIR_DEFAULT = './logs/cifar10'
 # You can check the TensorFlow API at
 # https://www.tensorflow.org/programmers_guide/variables
 # https://www.tensorflow.org/api_guides/python/contrib.layers#Initializers
-WEIGHT_INITIALIZATION_DICT = {'xavier': None, # Xavier initialisation
-                              'normal': None, # Initialization from a standard normal
-                              'uniform': None, # Initialization from a uniform distribution
+WEIGHT_INITIALIZATION_DICT = {'xavier': xavier_initializer, # Xavier initialisation
+                              'normal': tf.random_normal_initializer, # Initialization from a standard normal
+                              'uniform': tf.uniform_unit_scaling_initializer, # Initialization from a uniform distribution
                              }
 
 # You can check the TensorFlow API at
 # https://www.tensorflow.org/api_guides/python/contrib.layers#Regularizers
 WEIGHT_REGULARIZER_DICT = {'none': None, # No regularization
-                           'l1': None, # L1 regularization
-                           'l2': None # L2 regularization
+                           'l1': l1_regularizer, # L1 regularization
+                           'l2': l2_regularizer # L2 regularization
                           }
 
 # You can check the TensorFlow API at
 # https://www.tensorflow.org/api_guides/python/nn
-ACTIVATION_DICT = {'relu': None, # ReLU
-                   'elu': None, # ELU
-                   'tanh': None, #Tanh
-                   'sigmoid': None} #Sigmoid
+ACTIVATION_DICT = {'relu': tf.nn.relu, # ReLU
+                   'elu': tf.nn.elu, # ELU
+                   'tanh': tf.nn.tanh, #Tanh
+                   'sigmoid': tf.nn.sigmoid} #Sigmoid
 
 # You can check the TensorFlow API at
 # https://www.tensorflow.org/api_guides/python/train
-OPTIMIZER_DICT = {'sgd': None, # Gradient Descent
-                  'adadelta': None, # Adadelta
-                  'adagrad': None, # Adagrad
-                  'adam': None, # Adam
-                  'rmsprop': None # RMSprop
+OPTIMIZER_DICT = {'sgd': tf.train.GradientDescentOptimizer, # Gradient Descent
+                  'adadelta': tf.train.AdadeltaOptimizer, # Adadelta
+                  'adagrad': tf.train.AdagradOptimizer, # Adagrad
+                  'adam': tf.train.AdamOptimizer, # Adam
+                  'rmsprop': tf.train.RMSPropOptimizer # RMSprop
                   }
 
 FLAGS = None
-
-def initialize_parameters():
-    pass
-    #OPTIMIZER_DICT['sgd'] = [1,2,3]
 
 
 def plot_confusion_matrix(cm, classes,
@@ -113,6 +114,10 @@ def plot_confusion_matrix(cm, classes,
     plt.show()
 
 
+
+
+
+
 def train():
   """
   Performs training and evaluation of MLP model. Evaluate your model each 100 iterations
@@ -120,15 +125,6 @@ def train():
   """
   ### DO NOT CHANGE SEEDS!
   # Set the random seeds for reproducibility
-  import pickle
-  with open(FLAGS.data_dir + '/batches.meta', 'rb') as fo:
-      label_names = pickle.load(fo, encoding='bytes')
-      label_names = label_names[b'label_names']
-      label_names = [name.decode('UTF-8') for name in label_names]
-
-
-
-
   tf.set_random_seed(42)
   np.random.seed(42)
 
@@ -145,91 +141,88 @@ def train():
 
   if train_cifar:
     dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
-    n_input = 3072
+    n_input = [32,32,3]
     n_classes = 10
     norm_const = 255
+    with open(FLAGS.data_dir + '/batches.meta', 'rb') as fo:
+        label_names = pickle.load(fo, encoding='bytes')
+        label_names = label_names[b'label_names']
+        label_names = [name.decode('UTF-8') for name in label_names]
   else:
     dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
-    n_input = 784
+    n_input = [784]
     n_classes = 10
     norm_const = 1
+    label_names = [str(i) for i in range(10)]
 
   #Adam: 0.001, SGD: 0.1
   FLAGS.learning_rate = 0.001
-  FLAGS.max_steps = 15000
+  FLAGS.max_steps = 10000
 
   # tf Graph input
-  X = tf.placeholder("float", [None, n_input], )
-  Y = tf.placeholder("float", [None, n_classes])
-  train_mode = tf.placeholder(tf.bool)
+  X = tf.placeholder("float", [None] + n_input, name='X')
+  tf.summary.image('testing_images',X,4)
+  Y = tf.placeholder("float", [None, n_classes], name = 'labels')
+  is_training = tf.placeholder(tf.bool)
 
-  mlp = MLP(dnn_hidden_units, n_classes, is_training = train_mode, dropout_rate = 0.2)
+  mlp = MLP(dnn_hidden_units, n_classes,
+            is_training = is_training,
+            activation_fn=ACTIVATION_DICT[FLAGS.activation],
+            dropout_rate = 0.5)
+            # weight_initializer=WEIGHT_INITIALIZATION_DICT[FLAGS.weight_initialization],
+            # weight_regularizer=WEIGHT_REGULARIZER_DICT[FLAGS.weight_regularizer])
 
   logits = mlp.inference(X)
   loss = mlp.loss(logits, Y)
   train_step = mlp.train_step(loss, FLAGS)
   accuracy = mlp.accuracy(logits,Y)
-  # print(step, L, mlp.accuracy(logits, y))
-
-  tf.summary.scalar('L', loss)
-  tf.summary.scalar('acc', accuracy)
-  writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
-  summaries = tf.summary.merge_all()
 
 
   # Initializing the variables
   init = tf.global_variables_initializer()
 
+  summaries = tf.summary.merge_all()
+
   # Create session
   sess = tf.Session()
   sess.run(init)
+  writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
+  writer.add_graph(sess.graph)
 
-  for step in range(FLAGS.max_steps):
+  for step in range(0, FLAGS.max_steps):
     x, y = dataset.train.next_batch(FLAGS.batch_size)
-    x = np.reshape(x, (-1, n_input)) / norm_const
+    x = x / norm_const
 
-    # logits_value = sess.run(logits, feed_dict={X: x, train_mode: True   })
-    # loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
-    # sess.run(train_step, feed_dict={X: x, Y: y, train_mode: True })
+    [logits_value, loss_value, _] = sess.run([logits, loss, train_step],
+                                             feed_dict={X: x, Y: y, is_training: True })
 
-    [logits_value, loss_value, _] = sess.run([logits, loss, train_step], feed_dict={X: x, Y: y, train_mode: True })
-    #sess.run(train_step, feed_dict={loss: loss_value})
-
-
+    #Print loss/accuracy on the test set
     if step % 100 == 0:
-      x = dataset.test.images
-      x = np.reshape(x, (-1, n_input)) / norm_const
+      x = dataset.test.images  / norm_const
       y = dataset.test.labels
 
-      # logits_value = sess.run(logits, feed_dict={X: x, train_mode: False})
-      # loss_value = sess.run(loss, feed_dict={logits: logits_value, Y: y})
-      # accuracy_value = sess.run(accuracy, feed_dict={logits: logits_value, Y: y, train_mode: False})
-
-      [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy], feed_dict={X: x, Y: y, train_mode: False})
-
-      summ = sess.run(summaries, feed_dict={accuracy:accuracy_value, loss: loss_value})
-      writer.add_summary(summ, global_step=step)
+      [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],
+                                                            feed_dict={X: x, Y: y, is_training: False})
 
       print('step %d: loss: %f, acc: %f' % (step, loss_value, accuracy_value))
 
+      summ = sess.run(summaries, feed_dict={accuracy: accuracy_value, loss: loss_value, X: x, is_training: False})
+      writer.add_summary(summ, global_step=step)
 
-
+  #Print final loss/accuracy
   x = dataset.test.images / norm_const
-  x = np.reshape(x, (-1, n_input))
   y = dataset.test.labels
-
-  [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],feed_dict={X: x, Y: y, train_mode: False})
+  [logits_value, loss_value, accuracy_value] = sess.run([logits, loss, accuracy],feed_dict={X: x, Y: y, is_training: False})
   print('Final: loss: %f, acc: %f' % (loss_value, accuracy_value))
-
+  #Print confusion matrix
   y_pred = np.argmax(logits_value, axis = 1)
   y_true = np.argmax(y, axis = 1)
   conf_mat = confusion_matrix(y_true= y_true, y_pred= y_pred)
+  # plot_confusion_matrix(conf_mat,label_names)
 
+  for s in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+      print(s)
 
-  # print(label_names)
-  # print(conf_mat)
-
-  plot_confusion_matrix(conf_mat,label_names)
 
 
 
@@ -288,3 +281,7 @@ if __name__ == '__main__':
   FLAGS, unparsed = parser.parse_known_args()
 
   tf.app.run()
+
+
+
+

@@ -106,6 +106,8 @@ class MLP(object):
 
     # x = self._data_augment(x)
 
+
+    x = tf.contrib.layers.flatten(x)
     self.n_input =  x.get_shape()[1].value
 
     # holds [n_input, *n_hidden, n_classes]
@@ -120,40 +122,36 @@ class MLP(object):
     layers = [x]
 
     for l in range(len(n_all_layers) - 1):
-        # W = tf.get_variable("W" + str(l + 1), shape=[n_all_layers[l], n_all_layers[l + 1]],
-        #                     initializer=self.weight_initializer,
-        #                     regularizer=self.weight_regularizer)
-        # b = tf.get_variable("b" + str(l + 1), shape=[n_all_layers[l + 1]],
-        #                     initializer= tf.zeros_initializer())
-        # layer = tf.add(tf.matmul(layers[-1], W), b)
 
-        layer = tf.contrib.layers.fully_connected(layers[-1], n_all_layers[l + 1],
-                                                  activation_fn=None,
-                                                  weights_initializer=self.weight_initializer,
-                                                  weights_regularizer=self.weight_regularizer,
-                                                  biases_initializer=tf.zeros_initializer(),
-                                                  biases_regularizer=None)
+        with tf.variable_scope('fc{}'.format(l+1)) as scope:
+          W = tf.get_variable("weights", shape=[n_all_layers[l], n_all_layers[l + 1]],
+                              initializer=self.weight_initializer,
+                              regularizer=self.weight_regularizer)
+          b = tf.get_variable("bias", shape=[n_all_layers[l + 1]],
+                              initializer= tf.zeros_initializer())
 
-        # layer = tf.contrib.layers.batch_norm(layer,
-        #                                   center=True, scale=True,
-        #                                   is_training=self.is_training)
+          layer = tf.add(tf.matmul(layers[-1], W), b)
 
-        #Apply dropout and activation function on all the layers but the last one
-        if l != len(n_all_layers) - 2:
-          layer = self.activation_fn(layer)
-          layer = tf.cond(self.is_training, lambda: tf.nn.dropout(layer, 1 - self.dropout_rate),lambda: layer)
 
-          # layer = tf.cond(self.is_training, lambda: tf.nn.dropout(layer, 1 - self.dropout_rate),lambda: (1-self.dropout_rate) * layer)
+          tf.summary.histogram('weights', W)
+          tf.summary.histogram('biases', b)
+          tf.summary.histogram('preactivation', layer)
 
-        # weights.append(W)
-        # biases.append(b)
-        layers.append(layer)
+          #Apply dropout and activation function on all the layers but the last one
+          if l != len(n_all_layers) - 2:
+            # layer = tf.contrib.layers.batch_norm(layer,
+            #                                      center=True, scale=True,
+            #                                      is_training=self.is_training)
+            # tf.summary.histogram('batch_normalization', layer)
+            layer = self.activation_fn(layer, name = 'activation')
+            layer = tf.cond(self.is_training, lambda: tf.nn.dropout(layer, 1 - self.dropout_rate),lambda: layer)
+
+          layers.append(layer)
 
 
     self.weights = weights
     self.biases = biases
     self.layers = layers
-
 
 
     logits = layers[-1]
@@ -182,7 +180,10 @@ class MLP(object):
       loss: scalar float Tensor, full loss = cross_entropy + reg_loss
     """
 
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+    with tf.name_scope('xent'):
+      loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+
+      tf.summary.scalar('L', loss)
 
     return loss
 
@@ -199,10 +200,10 @@ class MLP(object):
       train_step: TensorFlow operation to perform one training step
     """
 
-    optimizer = tf.train.AdamOptimizer(learning_rate = flags.learning_rate)
-    #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)
+    with tf.name_scope('train'):
+      train_step = tf.train.AdamOptimizer(learning_rate = flags.learning_rate).minimize(loss)
+      #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)
 
-    train_step = optimizer.minimize(loss)
 
     return train_step
 
@@ -224,8 +225,10 @@ class MLP(object):
       accuracy: scalar float Tensor, the accuracy of predictions,
                 i.e. the average correct predictions over the whole batch.
     """
+    with tf.name_scope('accuracy'):
+      correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
+      accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+      tf.summary.scalar('acc', accuracy)
 
     return accuracy

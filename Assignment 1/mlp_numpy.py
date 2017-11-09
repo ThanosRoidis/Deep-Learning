@@ -42,10 +42,16 @@ class MLP(object):
     n_all_layers.insert(0,n_input)
     n_all_layers.append(n_classes)
     for layer in range(len(n_all_layers)-1):
-        # self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = weight_scale ))
-        self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = 2/n_all_layers[layer] ))
-        # self.W.append(np.random.normal(size = (n_all_layers[layer], n_all_layers[layer + 1]), scale = 1/n_all_layers[layer] ))
-        self.b.append(np.zeros(shape = (1,  n_all_layers[layer + 1])))
+        cur_l = n_all_layers[layer]
+        next_l = n_all_layers[layer + 1]
+
+        if(weight_scale > 0):
+            self.W.append(np.random.normal(size=(cur_l, next_l), scale = weight_scale ))
+        else:
+            self.W.append(np.random.normal(size=(cur_l, next_l), scale=2 / cur_l))
+            # self.W.append(np.random.normal(size=(cur_l, next_l), scale=1 / cur_l))
+
+        self.b.append(np.zeros(shape=(1, next_l)))
 
 
 
@@ -233,10 +239,15 @@ class MLP(object):
     return accuracy
 
 
+
+
 if __name__ == '__main__':
     # Parse arguments
      # Parse arguments
-     
+
+
+
+
     
     n_input = 2
     n_classes = 2
