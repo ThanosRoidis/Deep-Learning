@@ -1,9 +1,6 @@
 """
 This module implements training and evaluation of a multi-layer perceptron in NumPy.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import numpy as np
@@ -28,22 +25,6 @@ DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 FLAGS = None
 
 
-from scipy import ndimage
-
-def shift(image, max_amt=0.2):
-    new_img = np.copy(image)
-    shape = new_img.shape
-    max_x = int(shape[0] * max_amt)
-    max_y = int(shape[1] * max_amt)
-    x = np.random.randint(low=-max_x, high=max_x)
-    y = np.random.randint(low=-max_y, high=max_y)
-    return ndimage.interpolation.shift(new_img,shift=[x,y,0])
-
-
-def rotate(image):
-    randnum = np.random.randint(1,360)
-    new_image = np.copy(image)
-    return ndimage.rotate(new_image, angle=randnum, reshape=False)
 
 def train():
   """
@@ -54,7 +35,7 @@ def train():
   np.random.seed(42)
 
 
-  FLAGS.dnn_hidden_units = '100'
+  # FLAGS.dnn_hidden_units = '100'
   ## Prepare all functions
   # Get number of units in each hidden layer specified in the string such as 100,100
   if FLAGS.dnn_hidden_units:
@@ -69,29 +50,33 @@ def train():
     dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
     n_input = 3072
     n_classes = 10
-    norm_const = 255
+    norm_const = 1
   else:
     dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
     n_input = 784
     n_classes = 10
     norm_const = 1
 
-  x, y = dataset.train.next_batch(BATCH_SIZE_DEFAULT)
+  # x, y = dataset.train.next_batch(BATCH_SIZE_DEFAULT)
 
 
   # FLAGS.weight_reg_strength = 0.001
-  FLAGS.learning_rate = 0.1
+  # FLAGS.learning_rate = 0.1
   # FLAGS.max_steps = 10000
 
   mlp = MLP(n_input, dnn_hidden_units, n_classes,
             weight_decay=FLAGS.weight_reg_strength,
             weight_scale=FLAGS.weight_init_scale)
 
+  np.set_printoptions(threshold= np.nan)
+
   for step in range(FLAGS.max_steps):
     x, y = dataset.train.next_batch(FLAGS.batch_size)
     x = np.reshape(x, (-1, n_input)) / norm_const
 
     logits = mlp.inference(x)
+
+
     loss, full_loss = mlp.loss(logits, y)
     mlp.train_step(full_loss, FLAGS)
 
@@ -133,6 +118,10 @@ def main():
     os.makedirs(FLAGS.data_dir)
 
   # Run the training operation
+
+  # for layer in range(5, 0, -1):
+  #   print(layer)
+  # return
   train()
 
 import sys
@@ -159,12 +148,6 @@ if __name__ == '__main__':
                       help='Directory for storing input data')
   FLAGS, unparsed = parser.parse_known_args()
 
-  FLAGS.dnn_hidden_units
-  FLAGS.learning_rate
-  FLAGS.max_steps
-  FLAGS.batch_size
-  FLAGS.weight_init_scale
-  FLAGS.weight_reg_strength
-  FLAGS.data_dir
+
 
   main()

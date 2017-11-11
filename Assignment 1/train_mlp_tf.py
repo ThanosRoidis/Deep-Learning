@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import itertools
 import pickle
+import time
 
 
 from tensorflow.contrib.layers import l1_regularizer, l2_regularizer
@@ -114,7 +115,25 @@ def plot_confusion_matrix(cm, classes,
     plt.show()
 
 
+def initialize_parameters():
+    WEIGHT_INITIALIZATION_DICT['xavier'] =  xavier_initializer()  # Xavier initialisation
+    WEIGHT_INITIALIZATION_DICT['normal'] = tf.random_normal_initializer(FLAGS.weight_initialization_scale)  # Initialization from a standard normal
+    WEIGHT_INITIALIZATION_DICT['uniform'] = tf.random_uniform_initializer(FLAGS.weight_initialization_scale)
 
+    WEIGHT_REGULARIZER_DICT['none'] = None,  # No regularization
+    WEIGHT_REGULARIZER_DICT['l1'] = l1_regularizer(FLAGS.weight_regularizer_strength)  # L1 regularization
+    WEIGHT_REGULARIZER_DICT['l2'] = l2_regularizer(FLAGS.weight_regularizer_strength)  # L2 regularization
+
+    ACTIVATION_DICT['relu'] = tf.nn.relu  # ReLU
+    ACTIVATION_DICT['elu'] = tf.nn.elu  # ELU
+    ACTIVATION_DICT['tanh'] = tf.nn.tanh  # Tanh
+    ACTIVATION_DICT['sigmoid'] = tf.nn.sigmoid  # Sigmoid
+
+    OPTIMIZER_DICT['sgd'] = tf.train.GradientDescentOptimizer(learning_rate=FLAGS.learning_rate)  # Gradient Descent
+    OPTIMIZER_DICT['adadelta'] = tf.train.AdadeltaOptimizer(learning_rate=FLAGS.learning_rate)  # Adadelta
+    OPTIMIZER_DICT['adagrad'] = tf.train.AdagradOptimizer(learning_rate=FLAGS.learning_rate)   # Adagrad
+    OPTIMIZER_DICT['adam'] = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)  # Adam
+    OPTIMIZER_DICT['rmsprop'] = tf.train.RMSPropOptimizer(learning_rate=FLAGS.learning_rate)  # RMSprop
 
 
 
@@ -184,9 +203,10 @@ def train():
   summaries = tf.summary.merge_all()
 
   # Create session
+  log_path = LOG_DIR_DEFAULT + '/mlp_tf/mlp_tf_' + time.strftime("%Y%m%d-%H%M")
   sess = tf.Session()
   sess.run(init)
-  writer = tf.summary.FileWriter(LOG_DIR_DEFAULT)
+  writer = tf.summary.FileWriter(log_path)
   writer.add_graph(sess.graph)
 
   for step in range(0, FLAGS.max_steps):
@@ -220,8 +240,6 @@ def train():
   conf_mat = confusion_matrix(y_true= y_true, y_pred= y_pred)
   # plot_confusion_matrix(conf_mat,label_names)
 
-  for s in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
-      print(s)
 
 
 

@@ -8,6 +8,7 @@ from __future__ import print_function
 import tensorflow as tf
 from tensorflow.contrib.layers import xavier_initializer
 from tensorflow.contrib.layers import l1_regularizer, l2_regularizer
+import tensorflow.contrib.slim as slim
 
 import numpy as np
 
@@ -17,10 +18,6 @@ def augment_image(image):
   image = tf.image.random_flip_left_right(image)#, = 'rnd_flip_lr')
   image = tf.image.random_brightness(image, max_delta=63 / 255.0)#, name = 'rnd_bright')
   image = tf.image.random_contrast(image, lower=0.2, upper=1.8)#, name = 'rnd_contrast')
-
-  # begin, size, bbox_for_draw = tf.image.sample_distorted_bounding_box(tf.shape(image),np.asarray([0.2, 0.2, 0.5, 0.5]).reshape(1,1,4))
-  # image = tf.image.draw_bounding_boxes(tf.expand_dims(image, 0), bbox_for_draw)
-  # image = tf.squeeze(image)
 
 
   return image
@@ -48,6 +45,8 @@ def batch_norm(layer_output, is_training_):
       outputs_collections=None,
       trainable=True,
       scope=None)
+
+
 
 class ConvNet(object):
   """
@@ -101,11 +100,9 @@ class ConvNet(object):
     self.weight_regularizer = l2_regularizer(0.001)
 
     X = tf.cond(self.is_training, lambda: tf.map_fn(augment_image, x),lambda: x)
+    # X = x
+    tf.summary.image('augmented_images', X, 10)
 
-    tf.summary.image('augmented_images', X ,10)
-
-    # x2 = self._data_augment(x)
-    # x = self._data_augment(x)
 
     with tf.variable_scope('conv1') as scope:
         # Convolutional Layer #1
@@ -115,21 +112,19 @@ class ConvNet(object):
           filters=64,
           strides = [1,1],
           padding="same",
-          activation=tf.nn.relu)
+          activation=None)
 
         # pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[3, 3], strides=[2,2])
 
         conv1_bn = tf.contrib.layers.batch_norm(conv1,
                                              center=True, scale=True,
                                              is_training=self.is_training)
-
-        # conv1_bn = batch_norm(conv1, self.is_training)
+        conv1_bn = tf.nn.relu(conv1_bn)
 
         # Pooling Layer #1
         pool1 = tf.layers.max_pooling2d(inputs=conv1_bn, pool_size=[3, 3], strides=[2,2])
 
     # Convolutional Layer #2 and Pooling Layer #2
-
     with tf.variable_scope('conv2') as scope:
         conv2 = tf.layers.conv2d(
           inputs=pool1,
@@ -137,17 +132,16 @@ class ConvNet(object):
           filters=64,
           strides = [1,1],
           padding="same",
-          activation=tf.nn.relu)
-
-        # pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[3, 3], strides=[2,2])
+          activation=None)
 
         conv2_bn = tf.contrib.layers.batch_norm(conv2,
                                              center=True, scale=True,
                                              is_training=self.is_training)
 
-        # conv2_bn = batch_norm(conv2, self.is_training)
+        conv2_bn = tf.nn.relu(conv2_bn)
 
         pool2 = tf.layers.max_pooling2d(inputs=conv2_bn, pool_size=[3, 3], strides=[2,2])
+
 
     pool2_flat = tf.contrib.layers.flatten(inputs = pool2)
 
