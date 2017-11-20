@@ -22,30 +22,6 @@ def augment_image(image):
 
   return image
 
-def batch_norm(layer_output, is_training_):
-  """Applies batch normalization to the layer output.
-  Args:
-      layer_output: 4-d tensor, output of a FC/convolutional layer
-      is_training_: placeholder or boolean variable to set to True when training
-  """
-  return tf.contrib.layers.batch_norm(
-      layer_output,
-      decay=0.999,
-      center=True,
-      scale=True,
-      epsilon=0.001,
-      activation_fn=None,
-      # update moving mean and variance in place
-      updates_collections=None,
-      is_training=is_training_,
-      reuse=None,
-      # create a collections of varialbes to save
-      # (moving mean and moving variance)
-      variables_collections=['required_vars_collection'],
-      outputs_collections=None,
-      trainable=True,
-      scope=None)
-
 
 
 class ConvNet(object):
@@ -67,6 +43,9 @@ class ConvNet(object):
     self.n_classes = n_classes
     self.is_training = tf.placeholder(tf.bool, name = 'is_training')
     self.dropout_rate = 0.5
+
+    self.weight_initializer = xavier_initializer()
+    self.weight_regularizer = l2_regularizer(0.001)
 
 
   def inference(self, x):
@@ -96,12 +75,9 @@ class ConvNet(object):
               to evaluate the model.
     """
 
-    self.weight_initializer = xavier_initializer()
-    self.weight_regularizer = l2_regularizer(0.001)
 
     X = tf.cond(self.is_training, lambda: tf.map_fn(augment_image, x),lambda: x)
     # X = x
-    tf.summary.image('augmented_images', X, 10)
 
 
     with tf.variable_scope('conv1') as scope:
@@ -116,10 +92,10 @@ class ConvNet(object):
 
         # pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[3, 3], strides=[2,2])
 
-        conv1_bn = tf.contrib.layers.batch_norm(conv1,
-                                             center=True, scale=True,
-                                             is_training=self.is_training)
-        conv1_bn = tf.nn.relu(conv1_bn)
+        # conv1_bn = tf.contrib.layers.batch_norm(conv1,
+        #                                      center=True, scale=True,
+        #                                      is_training=self.is_training)
+        conv1_bn = tf.nn.relu(conv1)
 
         # Pooling Layer #1
         pool1 = tf.layers.max_pooling2d(inputs=conv1_bn, pool_size=[3, 3], strides=[2,2])
@@ -134,11 +110,11 @@ class ConvNet(object):
           padding="same",
           activation=None)
 
-        conv2_bn = tf.contrib.layers.batch_norm(conv2,
-                                             center=True, scale=True,
-                                             is_training=self.is_training)
+        # conv2_bn = tf.contrib.layers.batch_norm(conv2,
+        #                                      center=True, scale=True,
+        #                                      is_training=self.is_training)
 
-        conv2_bn = tf.nn.relu(conv2_bn)
+        conv2_bn = tf.nn.relu(conv2)
 
         pool2 = tf.layers.max_pooling2d(inputs=conv2_bn, pool_size=[3, 3], strides=[2,2])
 
@@ -152,13 +128,13 @@ class ConvNet(object):
                         regularizer=self.weight_regularizer)
         fc1b = tf.get_variable("b1", shape=[384],
                             initializer=tf.zeros_initializer())
-        # fc1l = tf.nn.bias_add(tf.matmul(pool2_flat, fc1W), fc1b)
+        fc1l = tf.nn.bias_add(tf.matmul(pool2_flat, fc1W), fc1b)
 
-        fc1l = tf.matmul(pool2_flat, fc1W)
-
-        fc1l = tf.contrib.layers.batch_norm(fc1l,
-                                             center=True, scale=True,
-                                             is_training=self.is_training)
+        # fc1l = tf.matmul(pool2_flat, fc1W)
+        #
+        # fc1l = tf.contrib.layers.batch_norm(fc1l,
+        #                                      center=True, scale=True,
+        #                                      is_training=self.is_training)
 
         # fc1l = tf.contrib.layers.batch_norm(fc1l, center=True, scale=True, is_training = self.is_training)
         fc1l = tf.nn.relu(fc1l)
@@ -171,16 +147,14 @@ class ConvNet(object):
                                regularizer=self.weight_regularizer)
         fc2b = tf.get_variable("b2", shape=[192],
                                initializer=tf.zeros_initializer())
-        # fc2l = tf.nn.bias_add(tf.matmul(fc1l, fc2W), fc2b)
+        fc2l = tf.nn.bias_add(tf.matmul(fc1l, fc2W), fc2b)
 
-        fc2l = tf.matmul(fc1l, fc2W)
+        # fc2l = tf.matmul(fc1l, fc2W)
+        #
+        # fc2l = tf.contrib.layers.batch_norm(fc2l,
+        #                                      center=True, scale=True,
+        #                                      is_training=self.is_training)
 
-        fc2l = tf.contrib.layers.batch_norm(fc2l,
-                                             center=True, scale=True,
-                                             is_training=self.is_training)
-
-
-        # fc2l = tf.contrib.layers.batch_norm(fc2l, center=True, scale=True, is_training = self.is_training)
 
         fc2l = tf.nn.relu(fc2l)
         fc2l = tf.cond(self.is_training, lambda: tf.nn.dropout(fc2l, 1 - self.dropout_rate), lambda: fc2l)
@@ -195,12 +169,6 @@ class ConvNet(object):
         logits = tf.nn.bias_add(tf.matmul(fc2l, fc3W), fc3b)
 
 
-        # logits = tf.contrib.layers.fully_connected(fc2l, self.n_classes,
-        #                                          activation_fn=None,
-        #                                          weights_initializer=self.weight_initializer,
-        #                                          weights_regularizer=self.weight_regularizer,
-        #                                          biases_initializer=tf.zeros_initializer(),
-        #                                          biases_regularizer=None)
 
 
     return logits
@@ -232,7 +200,13 @@ class ConvNet(object):
     with tf.name_scope('xent'):
       loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
 
-      tf.summary.scalar('L', loss)
+      #add regularization
+      reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+      if reg_variables:
+        reg_term = tf.contrib.layers.apply_regularization(self.weight_regularizer, reg_variables)
+        loss += reg_term
+
+
 
     return loss
 
@@ -248,14 +222,10 @@ class ConvNet(object):
     """
 
 
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-        train_step = tf.train.AdamOptimizer(learning_rate = flags.learning_rate).minimize(loss)
+    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    # with tf.control_dependencies(update_ops):
+    train_step = tf.train.AdamOptimizer(learning_rate = flags.learning_rate).minimize(loss)
 
-
-    # with tf.name_scope('train'):
-    #   train_step = tf.train.AdamOptimizer(learning_rate = flags.learning_rate).minimize(loss)
-    #   #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)
 
 
     return train_step
@@ -283,7 +253,6 @@ class ConvNet(object):
       correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
       accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-      tf.summary.scalar('acc', accuracy)
 
     return accuracy
 

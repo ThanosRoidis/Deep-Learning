@@ -48,7 +48,7 @@ class MLP(object):
         if(weight_scale > 0):
             self.W.append(np.random.normal(size=(cur_l, next_l), scale = weight_scale ))
         else:
-            self.W.append(np.random.normal(size=(cur_l, next_l), scale= 2 / cur_l))
+            self.W.append(np.random.normal(size=(cur_l, next_l), scale= np.sqrt(2 / cur_l)))
             # self.W.append(np.random.normal(size=(cur_l, next_l), scale=1 / cur_l))
 
         self.b.append(np.zeros(shape=(1, next_l)))

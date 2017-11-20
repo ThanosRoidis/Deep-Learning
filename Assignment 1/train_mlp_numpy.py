@@ -7,8 +7,6 @@ import numpy as np
 import os
 from mlp_numpy import MLP
 import cifar10_utils
-import matplotlib.pyplot as plt
-from tensorflow.examples.tutorials.mnist import input_data
 
 
 # Default constants
@@ -25,7 +23,6 @@ DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 FLAGS = None
 
 
-
 def train():
   """
   Performs training and evaluation of MLP model. Evaluate your model on the whole test set each 100 iterations.
@@ -34,8 +31,6 @@ def train():
   # Set the random seeds for reproducibility
   np.random.seed(42)
 
-
-  # FLAGS.dnn_hidden_units = '100'
   ## Prepare all functions
   # Get number of units in each hidden layer specified in the string such as 100,100
   if FLAGS.dnn_hidden_units:
@@ -44,38 +39,23 @@ def train():
   else:
     dnn_hidden_units = []
 
-  train_cifar = True
-
-  if train_cifar:
-    dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
-    n_input = 3072
-    n_classes = 10
-    norm_const = 1
-  else:
-    dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
-    n_input = 784
-    n_classes = 10
-    norm_const = 1
-
-  # x, y = dataset.train.next_batch(BATCH_SIZE_DEFAULT)
+  dataset = cifar10_utils.get_cifar10(FLAGS.data_dir)
+  n_input = 3072
+  n_classes = 10
+  norm_const = 1
 
 
-  # FLAGS.weight_reg_strength = 0.001
-  # FLAGS.learning_rate = 0.1
-  # FLAGS.max_steps = 10000
 
   mlp = MLP(n_input, dnn_hidden_units, n_classes,
             weight_decay=FLAGS.weight_reg_strength,
             weight_scale=FLAGS.weight_init_scale)
 
-  np.set_printoptions(threshold= np.nan)
 
   for step in range(FLAGS.max_steps):
     x, y = dataset.train.next_batch(FLAGS.batch_size)
     x = np.reshape(x, (-1, n_input)) / norm_const
 
     logits = mlp.inference(x)
-
 
     loss, full_loss = mlp.loss(logits, y)
     mlp.train_step(full_loss, FLAGS)
@@ -87,9 +67,11 @@ def train():
 
       logits = mlp.inference(x)
       loss, full_loss = mlp.loss(logits, y)
-      print('step %d: loss: %f, %f, acc: %f' % (step, loss, full_loss, mlp.accuracy(logits, y)))
+      acc = mlp.accuracy(logits, y)
+      print('step %d: loss: %f, %f, acc: %f' % (step, loss, full_loss, acc))
 
-
+  step += 1
+  # Evaluate on test set after the training has finished
   x = dataset.test.images / norm_const
   x = np.reshape(x, (-1, n_input))
   y = dataset.test.labels
@@ -99,13 +81,13 @@ def train():
   print('test:', L, mlp.accuracy(logits, y))
 
 
-
 def print_flags():
   """
   Prints all entries in FLAGS variable.
   """
   for key, value in vars(FLAGS).items():
     print(key + ' : ' + str(value))
+
 
 def main():
   """
@@ -119,17 +101,11 @@ def main():
 
   # Run the training operation
 
-  # for layer in range(5, 0, -1):
-  #   print(layer)
-  # return
   train()
 
-import sys
 
 if __name__ == '__main__':
   # Command line arguments
-
-  print(sys.version)
 
   parser = argparse.ArgumentParser()
   parser.add_argument('--dnn_hidden_units', type = str, default = DNN_HIDDEN_UNITS_DEFAULT,

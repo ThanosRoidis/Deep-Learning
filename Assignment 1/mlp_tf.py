@@ -58,18 +58,8 @@ class MLP(object):
     self.weight_regularizer = weight_regularizer
 
 
-
+    print(self.weight_regularizer)
     return
-
-  def _prep_data_augment(self,image):
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.random_brightness(image, max_delta=63 / 255.0)
-    image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
-    return image
-
-  def _data_augment(self,input_tensor):
-    output_tensor = tf.map_fn(self._prep_data_augment, input_tensor)
-    return output_tensor
 
 
   def inference(self, x):
@@ -183,7 +173,12 @@ class MLP(object):
     with tf.name_scope('xent'):
       loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
 
-      tf.summary.scalar('L', loss)
+      #add regularization
+      reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+      if reg_variables:
+        reg_term = tf.contrib.layers.apply_regularization(self.weight_regularizer, reg_variables)
+        loss += reg_term
+
 
     return loss
 
@@ -201,8 +196,7 @@ class MLP(object):
     """
 
     with tf.name_scope('train'):
-      train_step = tf.train.AdamOptimizer(learning_rate = flags.learning_rate).minimize(loss)
-      #optimizer = tf.train.GradientDescentOptimizer(learning_rate = flags.learning_rate)
+      train_step = flags.optimizer_obj.minimize(loss)
 
 
     return train_step
@@ -229,6 +223,5 @@ class MLP(object):
       correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
       accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-      tf.summary.scalar('acc', accuracy)
 
     return accuracy

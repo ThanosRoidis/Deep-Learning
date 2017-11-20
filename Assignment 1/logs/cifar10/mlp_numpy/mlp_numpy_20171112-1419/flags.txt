@@ -1,0 +1,7 @@
+weight_init_scale : 0.0001
+data_dir : ./cifar10/cifar-10-batches-py
+learning_rate : 0.002
+batch_size : 200
+weight_reg_strength : 0.001
+dnn_hidden_units : 100
+max_steps : 5000
