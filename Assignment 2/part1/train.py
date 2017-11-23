@@ -58,10 +58,15 @@ def train(config):
     #
     # exit()
 
-    config.input_length = 22
+    config.input_length = 30
     config.learning_rate = 0.001
+    # config.model_type = 'RNN'
     config.model_type = 'LSTM'
     # config.train_steps = 10000
+
+
+    for key, value in vars(config).items():
+        print(key + ' : ' + str(value))
 
     # Setup the model that we are going to use
     if config.model_type == 'RNN':

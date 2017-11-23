@@ -38,6 +38,8 @@ class LSTM(object):
         self._targets = tf.placeholder(tf.uint8, shape=[self._batch_size],
                                        name='targets')
 
+
+
         self._input_one_hot = tf.one_hot(self._inputs, num_classes)
         self._targets_one_hot = tf.one_hot(self._targets, num_classes)
 
@@ -116,7 +118,7 @@ class LSTM(object):
 
             b_out = tf.get_variable("b_out")
 
-            h = self._states[-1][1]
+            h = self._states[-1][0]
 
             logits = tf.nn.bias_add(tf.matmul(h, W_out), b_out)
 
@@ -167,3 +169,4 @@ class LSTM(object):
     def states(self):
         """ A 2-D float32 placeholder with shape ` `. """
         return self._states
+
