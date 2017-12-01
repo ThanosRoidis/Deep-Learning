@@ -26,47 +26,127 @@ import tensorflow as tf
 
 from dataset import TextDataset
 from model import TextGenerationModel
+import pickle
 
 
-def train(config):
+
+
+def print_sampled_sentences(session, model, dataset):
+    """generate and print sentences using hill climbing and beam search"""
+
+    # Parameters for the generated sentences during train time
+    sampled_sentence_length = 70
+    # prefix_sentences = ['The king', 'Sleeping beauty is', 'THE', 'A']
+    prefix_sentences = ['Thou shalt not', 'God', '88:19']
+    beam_width = 8
+    no_successors = 4
+    top_k = 10
+
+    all_sentences = []
+    all_probs = []
+
+
+    for prefix_sentence in prefix_sentences:
+
+        # Random
+        generated_texts, log_probs = model.generate_sentence(session, sampled_sentence_length, prefix_sentence,
+                                                              dataset,
+                                                              beam_width=1, samples_per_step=1,
+                                                              top_k=10)
+        print(generated_texts[0], log_probs[0])
+        all_sentences.append(generated_texts[0])
+        all_probs.append(log_probs[0])
+
+
+        #Hill climbing
+        generated_texts, log_probs = model.generate_sentence(session, sampled_sentence_length, prefix_sentence,
+                                                              dataset,
+                                                              beam_width=1, samples_per_step=1,
+                                                              top_k=1)
+        print(generated_texts[0], log_probs[0])
+        all_sentences.append(generated_texts[0])
+        all_probs.append(log_probs[0])
+
+
+        # Beam search
+        generated_texts, log_probs = model.generate_sentence(session, sampled_sentence_length, prefix_sentence, dataset,
+                                                   beam_width=beam_width, samples_per_step=no_successors, top_k=top_k)
+        print(generated_texts[0], log_probs[0])
+        all_sentences.append(generated_texts[0])
+        all_probs.append(log_probs[0])
+        print()
+
+    return all_sentences, all_probs
 
 
 
-    # a = [1,2,3]
-    # b = [a[i] for i in [0,1]]
-    #
-    # print(a)
-    # print(b)
-    # exit()
+def load_config(config, checkpoint_path):
 
-    # t = np.random.rand(10, 30, 5)
-    # a = tf.reshape(t, [-1, 5])
-    # print(a.get_shape().as_list())
-    #
-    # init = tf.global_variables_initializer()
-    # sess = tf.Session()
-    # sess.run(init)
-    # v = sess.run(a)
+    # Load config
+    config_dict = {}
 
-    # print(v.shape)
-    # print(t[0,:,:])
-    # print(v[0:30,:])
+    with open(checkpoint_path + 'config.txt', 'r') as f:
+        lines = f.readlines()
 
-    # exit()
+        for line in lines:
+            [key, value] = [item.strip() for item in line.split(':')]
 
-    # Initialize the text dataset
-    config.txt_file = "books/book_EN_grimms_fairy_tails.txt"
-    config.train_steps = 10000
-    config.dropout_keep_prob = 1
-    config.lstm_num_layers = 3
+            if key == 'train_steps':
+                config_dict['train_steps'] = config.train_steps
+                continue
 
-    sentence_length = 50
-    prefix_sentence = 'The king'
+            # Convert data types
+            if key != 'txt_file' and key != 'summary_path':
+                if key == 'log_device_placement':
+                    value = (value == True)
+                else:
+                    if value.isdigit():
+                        value = int(value)
+                    else:
+                        value = float(value)
+
+            config_dict[key] = value
+
+    return config_dict
+
+
+def train(config, global_step = 0, model_folder = ""):
+    """ provide a global_step and a model_folder in the ./checkpoints folder in order to
+        continue training from a previously stored model
+    """
     save_freq = 5000
 
+    # If training continuous from a previous execution, read from the config file everything but the number of train steps
+    if global_step != 0:
+        checkpoint_path = './checkpoints/' + model_folder
+        print('Continuing training from {}'.format(checkpoint_path + 'model-' + str(global_step)))
 
+        config.__dict__ = load_config(config,checkpoint_path)
+
+    # If a new model is trained
+    else:
+
+        # Create folder to store the model
+        bookname = (config.txt_file.split('/')[1]).split('.')[0]
+        model_folder = bookname + '_' + time.strftime("%Y%m%d-%H%M")
+        checkpoint_path = './checkpoints/' + model_folder
+        if not tf.gfile.Exists(checkpoint_path):
+            tf.gfile.MakeDirs(checkpoint_path)
+
+        # Store the configuration of the model
+        file = open(checkpoint_path + '/config.txt', 'w+')
+        for key, value in vars(config).items():
+            file.write(key + ' : ' + str(value) + '\n')
+        file.close()
+
+        print('Training new model on {}'.format(checkpoint_path))
+
+    # print config
     for key, value in vars(config).items():
         print(key + ' : ' + str(value))
+
+
+
 
     dataset = TextDataset(config.txt_file)
 
@@ -81,8 +161,6 @@ def train(config):
         keep_prob = config.dropout_keep_prob
     )
 
-
-    # exit()
 
     ###########################################################################
     # Implement code here.
@@ -102,30 +180,35 @@ def train(config):
     # Implement code here.
     ###########################################################################
 
-    # Initialize Saver
-    # saver = tf.train.Saver()
-    # model_name = 'model'
-    # bookname = (config.txt_file.split('/')[1]).split('.')[0]
-    # checkpoint_path = './checkpoints/' + bookname + '_' + time.strftime("%Y%m%d-%H%M")
-    # if not tf.gfile.Exists(checkpoint_path):
-    #     tf.gfile.MakeDirs(checkpoint_path)
 
-
+    # Initialize Saver and session
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
+    saver = tf.train.Saver()
 
-    generated_text = model.generate_sentence(sess, sentence_length, prefix_sentence, dataset)
-    print(generated_text)
+    # restore the model
+    if global_step != 0:
+        saver.restore(sess, checkpoint_path + 'model-' + str(global_step))
 
-    generated_texts = model.generate_sentence2(sess, sentence_length, prefix_sentence, dataset,
-                                               beam_width=4, samples_per_step=3, top_k=10)
-    for text in generated_texts:
-        print(text)
+    tm_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    for var in tm_variables:
+        tf.summary.histogram(var.name, var)
 
-    # exit()
+    tf.summary.scalar('loss', model.loss)
+    sentences_placeholder = tf.placeholder(dtype=tf.string)
+    tf.summary.text('Generated sentences', sentences_placeholder)
+    # Store the configuration of the model
 
-    for train_step in range(int(config.train_steps)):
+
+    merged_summary = tf.summary.merge_all()
+
+    writer = tf.summary.FileWriter(config.summary_path + model_folder)
+    writer.add_graph(sess.graph)
+
+
+
+    for train_step in range(global_step, int(config.train_steps)):
 
         # Only for time measurement of step through network
         t1 = time.time()
@@ -157,29 +240,41 @@ def train(config):
                 loss_value
             ))
 
+        # Generate and print sentences
         if(train_step % config.sample_every == 0):
+            # Generate and print sentence
+            all_sentences, all_probs = print_sampled_sentences(sess, model, dataset)
+            writer.add_summary(
+                sess.run(merged_summary, feed_dict={model.loss: loss_value, sentences_placeholder: all_sentences}),
+                global_step=train_step)
 
-            generated_text = model.generate_sentence(sess, sentence_length, prefix_sentence, dataset)
-            print(generated_text)
-
-            generated_texts = model.generate_sentence2(sess, sentence_length, prefix_sentence, dataset,
-                                                       beam_width=4, samples_per_step=3, top_k=10)
-            for text in generated_texts:
-                print(text)
-
+            with open(config.summary_path + model_folder + '/sentences.txt', 'a+') as file:
+                file.write('\n-------------------------------------------------------------\n')
+                file.write(str(train_step) + '\n')
+                file.write('-------------------------------------------------------------\n\n')
+                for i,sentence in enumerate(all_sentences):
+                    file.write(sentence + ' | ' + str(all_probs[i])  + '\n')
 
 
-                # if(train_step % save_freq == 0):
-        #     save_path = saver.save(sess, checkpoint_path + '/' + model_name, global_step=train_step)
-        #     print('Model saved at %s' % (save_path))
+        # Save model
+        if(train_step % save_freq == 0):
+            save_path = saver.save(sess, checkpoint_path + '/' + 'model', global_step=train_step)
+            print('Model saved at %s' % (save_path))
 
-    generated_text = model.generate_sentence(sess, sentence_length, prefix_sentence, dataset)
-    print(generated_text)
+    # Generate and print sentence
+    all_sentences,all_probs = print_sampled_sentences(sess, model, dataset)
+    writer.add_summary(sess.run(merged_summary, feed_dict={model.loss: loss_value, sentences_placeholder: all_sentences}), global_step=train_step)
+    with open(config.summary_path + model_folder + '/sentences.txt', 'a+') as file:
+        file.write('\n-------------------------------------------------------------\n')
+        file.write(str(train_step) + '\n')
+        file.write('-------------------------------------------------------------\n\n')
+        for i, sentence in enumerate(all_sentences):
+            file.write(sentence + ' | ' + str(all_probs[i]) + '\n')
+    # Save model
+    save_path = saver.save(sess, checkpoint_path + '/' + 'model', global_step=train_step+1)
+    print('Model saved at %s' % (save_path))
 
-    generated_texts = model.generate_sentence2(sess, sentence_length, prefix_sentence, dataset,
-                                               beam_width=4, samples_per_step=3, top_k=10)
-    for text in generated_texts:
-        print(text)
+
 
 
 if __name__ == "__main__":
@@ -212,5 +307,7 @@ if __name__ == "__main__":
 
     config = parser.parse_args()
 
+
     # Train the model
     train(config)
+    # train(config, global_step=5000, model_folder='book_EN_grimms_fairy_tails_20171126-1622/')

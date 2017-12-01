@@ -35,7 +35,7 @@ class VanillaRNN(object):
         initializer_biases  = tf.constant_initializer(0.0)
 
 
-        self._inputs = tf.placeholder(tf.uint8, shape=[self._batch_size, input_length - 1],
+        self._inputs = tf.placeholder(tf.uint8, shape=[self._batch_size, input_length],
                                       name='inputs')
         self._targets = tf.placeholder(tf.uint8, shape=[self._batch_size],
                                        name='targets')
@@ -65,6 +65,11 @@ class VanillaRNN(object):
         self.b_o = tf.get_variable("b_o", shape=[num_classes],
                                initializer=initializer_biases)
 
+        self._logits = self._compute_logits()
+        self._loss = self._compute_loss()
+        self._accuracy = self._compute_accuracy()
+
+
 
     def _rnn_step(self, h_prev, x):
         # Single step through Vanilla RNN cell ..
@@ -76,7 +81,7 @@ class VanillaRNN(object):
 
         return h
 
-    def compute_logits(self):
+    def _compute_logits(self):
         # Implement the logits for predicting the last digit in the palindrome
 
         initial_state = tf.zeros([self._batch_size, self._num_hidden],
@@ -88,11 +93,9 @@ class VanillaRNN(object):
 
         logits = tf.nn.bias_add(tf.matmul(self._states[-1], self.W_oh), self.b_o)
 
-        self._logits = logits
-
         return logits
 
-    def compute_loss(self):
+    def _compute_loss(self):
         # Implement the cross-entropy loss for classification of the last digit
 
         labels = self._targets_one_hot
@@ -102,20 +105,11 @@ class VanillaRNN(object):
 
         return loss
 
-    def accuracy(self):
+    def _compute_accuracy(self):
         # Implement the accuracy of predicting the
         # last digit over the current batch ...
 
         labels = self._targets_one_hot
-
-        print(self._logits.get_shape()[0].value)
-
-        print(self._logits.get_shape()[1].value)
-
-
-        print( labels.get_shape()[0].value)
-
-        print( labels.get_shape()[1].value)
 
         with tf.name_scope('accuracy'):
             correct_prediction = tf.equal(tf.argmax(self._logits, 1), tf.argmax(labels, 1))
@@ -142,6 +136,18 @@ class VanillaRNN(object):
     def logits(self):
         """ A 3-D float32 placeholder with shape ``. """
         return self._logits
+
+
+    @property
+    def loss(self):
+        """ A 3-D float32 placeholder with shape ``. """
+        return self._loss
+
+
+    @property
+    def accuracy(self):
+        """ A 3-D float32 placeholder with shape ``. """
+        return self._accuracy
 
     @property
     def states(self):

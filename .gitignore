@@ -1,3 +1,5 @@
 "Assignment 1/cifar10/"
 "Assignment 1/MNIST_data/"
-"Assignment 1/checkpoints/"
+**/summaries/
+**/checkpoints/
+

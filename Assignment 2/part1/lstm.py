@@ -33,13 +33,13 @@ class LSTM(object):
         initializer_biases  = tf.constant_initializer(0.0)
 
 
-        self._inputs = tf.placeholder(tf.uint8, shape=[self._batch_size, input_length - 1],
+        self._inputs = tf.placeholder(tf.uint8, shape=[self._batch_size, input_length],
                                       name='inputs')
         self._targets = tf.placeholder(tf.uint8, shape=[self._batch_size],
                                        name='targets')
 
 
-
+        # size = [batch_size, input_length, num_classes]
         self._input_one_hot = tf.one_hot(self._inputs, num_classes)
         self._targets_one_hot = tf.one_hot(self._targets, num_classes)
 
@@ -49,12 +49,16 @@ class LSTM(object):
         self._init_gate_vars('output_gate', 'o', initializer_weights, initializer_biases)
 
         with tf.variable_scope('output_layer'):
-            W_out = tf.get_variable("W_out", shape=[self._num_hidden, self._num_classes],
+            tf.get_variable("W_out", shape=[self._num_hidden, self._num_classes],
                                     initializer=initializer_weights,
                                     regularizer=None)
 
-            b_out = tf.get_variable("b_out", shape=[self._num_classes],
+            tf.get_variable("b_out", shape=[self._num_classes],
                                     initializer=initializer_biases)
+
+        self._logits = self._compute_logits()
+        self._loss = self._compute_loss()
+        self._accuracy = self._compute_accuracy()
 
     def _init_gate_vars(self, scope_name, name_prefix, initializer_weights, initializer_biases):
         with tf.variable_scope(scope_name):
@@ -68,6 +72,9 @@ class LSTM(object):
 
             tf.get_variable("b_{}".format(name_prefix), shape=[self._num_hidden],
                                        initializer=initializer_biases)
+
+
+
 
 
 
@@ -101,7 +108,7 @@ class LSTM(object):
 
         return tf.stack([h,c])
 
-    def compute_logits(self):
+    def _compute_logits(self):
         # Implement the logits for predicting the last digit in the palindrome
 
         #initial state for c and h
@@ -126,7 +133,7 @@ class LSTM(object):
 
         return logits
 
-    def compute_loss(self):
+    def _compute_loss(self):
         # Implement the cross-entropy loss for classification of the last digit
 
         labels = self._targets_one_hot
@@ -136,7 +143,7 @@ class LSTM(object):
 
         return loss
 
-    def accuracy(self):
+    def _compute_accuracy(self):
         # Implement the accuracy of predicting the
         # last digit over the current batch ...
 
@@ -164,6 +171,18 @@ class LSTM(object):
     def logits(self):
         """ A 3-D float32 placeholder with shape ``. """
         return self._logits
+
+
+    @property
+    def loss(self):
+        """ A 3-D float32 placeholder with shape ``. """
+        return self._loss
+
+
+    @property
+    def accuracy(self):
+        """ A 3-D float32 placeholder with shape ``. """
+        return self._accuracy
 
     @property
     def states(self):

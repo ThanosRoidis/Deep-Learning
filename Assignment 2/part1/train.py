@@ -34,35 +34,6 @@ def train(config):
 
     assert config.model_type in ('RNN', 'LSTM')
 
-    # palindromes = utils.generate_palindrome_batch(2, 5)
-    # inputs, targets = palindromes[:, :-1], palindromes[:, -1]
-
-    # _inputs = tf.placeholder(tf.uint8, shape=[2, config.input_length - 1],
-    #                               name='inputs')
-    # _input_one_hot = tf.one_hot(_inputs, config.num_classes)
-    #
-    # sess = tf.Session();
-    # sess.run(tf.global_variables_initializer())
-    #
-    # res = sess.run(_input_one_hot, feed_dict={_inputs: inputs})
-    # print(inputs)
-    # print(res)
-    #
-    # print()
-    #
-    # rnn_inputs = tf.unstack(_input_one_hot, axis=0)
-    # res = sess.run(rnn_inputs, feed_dict={_inputs: inputs})
-    # for i in res:
-    #     print(i)
-    #
-    #
-    # exit()
-
-    config.input_length = 30
-    config.learning_rate = 0.001
-    # config.model_type = 'RNN'
-    config.model_type = 'LSTM'
-    # config.train_steps = 10000
 
 
     for key, value in vars(config).items():
@@ -72,13 +43,13 @@ def train(config):
     if config.model_type == 'RNN':
         print("Initializing Vanilla RNN model...")
         model = VanillaRNN(
-            config.input_length, config.input_dim, config.num_hidden,
+            config.input_length - 1, config.input_dim, config.num_hidden,
             config.num_classes, config.batch_size
         )
     else:
         print("Initializing LSTM model...")
         model = LSTM(
-            config.input_length, config.input_dim, config.num_hidden,
+            config.input_length - 1, config.input_dim, config.num_hidden,
             config.num_classes, config.batch_size
         )
 
@@ -88,20 +59,13 @@ def train(config):
 
     # Define the optimizer
     optimizer = tf.train.RMSPropOptimizer(config.learning_rate)
-    model.compute_logits()
-    model_loss = model.compute_loss()
-    model_acc = model.accuracy()
 
 
     ###########################################################################
-    # Implement code here.
+    # QUESTION: It applies gradient clipping in order to avoid the exploding gradients problem
     ###########################################################################
 
-    ###########################################################################
-    # QUESTION: what happens here and why?
-    ###########################################################################
-
-    grads_and_vars = optimizer.compute_gradients(model_loss)
+    grads_and_vars = optimizer.compute_gradients(model.loss)
 
     grads, variables = zip(*grads_and_vars)
     grads_clipped, _ = tf.clip_by_global_norm(grads, clip_norm=config.max_norm_gradient)
@@ -113,22 +77,34 @@ def train(config):
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
+    #add to the summary all the trainable variables and the loss/accuracy
+    tm_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    for var in tm_variables:
+        tf.summary.histogram(var.name, var)
+    tf.summary.scalar('xent', model.loss)
+    tf.summary.scalar('accuracy', model.accuracy)
+    merged_summary = tf.summary.merge_all()
 
+    summary_path = config.summary_path + "{}_{}_{}".format(config.model_type, config.input_length, config.learning_rate)
+    writer = tf.summary.FileWriter(summary_path)
+    writer.add_graph(sess.graph)
 
     ###########################################################################
 
+    accuracy_hist = []
     for train_step in range(config.train_steps):
 
         palindromes = utils.generate_palindrome_batch(config.batch_size, config.input_length)
-
         inputs, targets = palindromes[:,:-1], palindromes[:,-1]
-
 
 
         # Only for time measurement of step through network
         t1 = time.time()
 
-        [_, acc_val, loss_val] = sess.run([apply_gradients_op, model_acc, model_loss],feed_dict = {model.inputs: inputs, model.targets: targets})
+        [_, acc_val, loss_val] = sess.run([apply_gradients_op, model.accuracy, model.loss],feed_dict = {model.inputs: inputs, model.targets: targets})
+
+
+        accuracy_hist.append(acc_val)
 
         # Only for time measurement of step through network
         t2 = time.time()
@@ -143,14 +119,24 @@ def train(config):
                 acc_val, loss_val
             ))
 
+            # write summary
+            res_sum = sess.run(merged_summary, feed_dict={model.loss: loss_val, model.accuracy: acc_val})
+
+            writer.add_summary(res_sum, global_step=train_step)
+
+            #Stop if it has achieved an average accuracy higher that 0.98 on the last 20 batches
+            if len(accuracy_hist) > 20:
+                avg_acc = np.mean(accuracy_hist[-20:])
+
+                if(avg_acc > 0.98):
+                    pass
+                    #break
+
+    writer.close()
 
 
-    palindromes = utils.generate_palindrome_batch(config.batch_size, config.input_length)
-    inputs, targets = palindromes[:, :-1], palindromes[:, -1]
-    preds = sess.run(tf.argmax(model.logits, 1), feed_dict={model.inputs: inputs})
 
-    print(inputs[:10])
-    print(preds[:10])
+
 
 
 if __name__ == "__main__":
@@ -175,11 +161,22 @@ if __name__ == "__main__":
     parser.add_argument('--summary_path', type=str, default="./summaries/", help='Output path for summaries')
     parser.add_argument('--print_every', type=int, default=5, help='How often to print training progress')
 
+
     config = parser.parse_args()
 
-    # Train the model
-    train(config)
 
+    grid_search = False
 
+    if not grid_search:
+        train(config)
 
+    else:
+        print('Starting grid search...')
+        for model_type in ['RNN', 'LSTM']:
+            for input_length in [5, 10, 20, 30, 40, 50]:
+                for learning_rate in [0.001, 0.025, 0.25]:
+                    config.model_type = model_type
+                    config.input_length = input_length
+                    config.learning_rate = learning_rate
 
+                    train(config)
