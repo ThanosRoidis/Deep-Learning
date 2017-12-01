@@ -2,4 +2,6 @@
 "Assignment 1/MNIST_data/"
 **/summaries/
 **/checkpoints/
+**/__pycache__/
+*.pyc
 
