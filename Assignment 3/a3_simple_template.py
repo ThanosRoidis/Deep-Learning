@@ -109,9 +109,10 @@ class NaiveBayesModel(object):
 
 
 
-def subplot_digits(digits, labels, shape):
+def subplot_digits(digits, labels, shape, title = ""):
 
-    f, axarr = plt.subplots(*shape)
+    f, axarr = plt.subplots(*shape, figsize=(15,15))
+    f.canvas.set_window_title(title)
     axarr = axarr.flat
 
     for i in range(digits.shape[0]):
@@ -125,10 +126,34 @@ def subplot_digits(digits, labels, shape):
         axarr[i].axis('off')
 
     # f.subplots_adjust(hspace=0.3)
-    f.tight_layout(pad=0, w_pad=0, h_pad=0)
+    # f.tight_layout(pad=0, w_pad=0, h_pad=0)
+    f.tight_layout()
 
     plt.draw()
+    #f.savefig("./{}.png".format(title.replace(" ", "_")))
 
+
+def merge_images(flat_images, size, resize_factor = 1.0):
+    # flat_images is an Nx784 array, combines all of the images into an 28*sqrt(N) x 28*sqrt(N) array
+
+    images = flat_images.reshape(-1, 28, 28)
+
+    h, w = 28,28
+
+    h_ = int(h * resize_factor)
+    w_ = int(w * resize_factor)
+
+    img = np.zeros((h_ * size[0], w_ * size[1]))
+
+    for idx, image in enumerate(images):
+        i = int(idx % size[1])
+        j = int(idx / size[1])
+
+        image_ = imresize(image.squeeze(), size=(w_, h_), interp='bicubic')
+
+        img[j * h_:j * h_ + h_, i * w_:i * w_ + w_] = image_
+
+    return img
 
 
 def get_frankenstein_digits(x_train, frankenstein_size):
@@ -198,7 +223,7 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
     images_placeholder = tf.placeholder("float", [None,28,28,1], name='images')
     exp_pix_summary = tf.summary.image('params',images_placeholder, max_outputs = 100)
 
-    loss_sum = tf.summary.scalar('Loss', loss)
+    log_prob_summ = tf.summary.scalar('Log_prob', -loss)
 
 
     with tf.Session() as sess:
@@ -228,15 +253,15 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
 
                 test_size = x_test.shape[0]
 
-                test_loss = sess.run(loss, feed_dict={x_minibatch: x_test[:test_size]})
+                test_log_prob = -sess.run(loss, feed_dict={x_minibatch: x_test[:test_size]})
 
-                train_loss = sess.run(loss, feed_dict={x_minibatch: x_train[:test_size]})
+                train_log_prob = -sess.run(loss, feed_dict={x_minibatch: x_train[:test_size]})
 
                 print("[{}] Train Step {:04d}/{:04d}, "
-                      "Examples/Sec = {:.2f}, Loss = {} | {}".format(
+                      "Examples/Sec = {:.2f}, Log Prob = {:.8f} | {:.8f}".format(
                     datetime.now().strftime("%Y-%m-%d %H:%M"), i,
                     n_steps,  examples_per_second,
-                    train_loss, test_loss))
+                    train_log_prob, test_log_prob))
 
 
                 # Summary the expected pixel values per category
@@ -248,9 +273,9 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
                 writer.add_summary(sess.run(exp_pix_summary, feed_dict={images_placeholder:theta_val}), global_step=i)
 
                 # write train and test loss
-                train_writer.add_summary(sess.run(loss_sum, feed_dict={loss: train_loss}), global_step=i)
+                train_writer.add_summary(sess.run(log_prob_summ, feed_dict={loss: -train_log_prob}), global_step=i)
 
-                writer.add_summary(sess.run(loss_sum, feed_dict={loss: test_loss}), global_step=i)
+                writer.add_summary(sess.run(log_prob_summ, feed_dict={loss: -test_log_prob}), global_step=i)
 
 
 
@@ -259,13 +284,13 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
         theta_val = sess.run(model.theta)
         theta_val = np.transpose(theta_val)
         labels = ["Category = {}".format(z) for z in range(n_categories)]
-        subplot_digits(theta_val, labels, shape = (5,4))
+        subplot_digits(theta_val, labels, shape = (5,4), title ="Expected pixel values per category")
 
 
         # Sample and plot 'plot_n_samples' images
         [X_samples, Z_samples] = sess.run(model.sample(plot_n_samples))
         labels = ["Category = {}".format(z) for z in Z_samples]
-        subplot_digits(X_samples, labels, shape = (plot_n_samples // 4,4))
+        subplot_digits(X_samples, labels, shape = (plot_n_samples // 4,4),title ="Sampled Images")
 
 
         #Create and plot 10 frankenstein images, along with the original
@@ -277,10 +302,12 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
         fr_log_p_x = sess.run(log_p_x, feed_dict={x_minibatch: frankenstein_images})
 
         labels = ["logp = {0:.2f}".format(p) for p in fr_log_p_x]
-        subplot_digits(frankenstein_images, labels, shape = (2,5))
+        subplot_digits(frankenstein_images, labels, shape = (2,5),title ="Frankenstein Images")
+        print("Frankenstein mean log prob: {}".format(np.mean(fr_log_p_x)))
 
         labels = ["logp = {0:.2f}".format(p) for p in or_log_p_x]
-        subplot_digits(original_images, labels, shape = (2,5))
+        subplot_digits(original_images, labels, shape = (2,5),title ="Original Frankenstein Images")
+        print("Original Frankenstein mean log prob: {}".format(np.mean(or_log_p_x)))
 
         plt.show()
 
@@ -289,6 +316,7 @@ def train_simple_generative_model_on_mnist(n_categories=20, initial_mag = 0.01, 
 
 if __name__ == '__main__':
 
-
-    train_simple_generative_model_on_mnist(plot_n_samples=16,n_epochs=20)
+    if not tf.gfile.Exists('./summaries'):
+        tf.gfile.MakeDirs('./summaries')
+    train_simple_generative_model_on_mnist(plot_n_samples=16)
 

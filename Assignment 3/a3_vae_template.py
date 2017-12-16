@@ -55,8 +55,8 @@ class VariationalAutoencoder(object):
         y = self.y
         self.z = z
 
-        marginal_likelihood = tf.reduce_sum(x * tf.log(tf.clip_by_value(y, 1e-10, 1.0)) +
-                                            (1 - x) * tf.log(tf.clip_by_value(1 - y, 1e-10, 1.0)), 1)
+        marginal_likelihood = tf.reduce_sum(x * tf.log(tf.clip_by_value(y, 1e-8, 1.0)) +
+                                            (1 - x) * tf.log(tf.clip_by_value(1 - y, 1e-8, 1.0)), 1)
 
         KL_divergence = 0.5 * tf.reduce_sum(tf.square(sigma) + tf.square(mu) -  tf.log(tf.clip_by_value(tf.square(sigma), 1e-10, 1.0)) - 1, 1)
 
@@ -288,7 +288,7 @@ def plot_scattered_image(self, z, id, name='scattered_image.jpg'):
 
 def train_vae_on_mnist(z_dim=2, kernel_initializer='glorot_uniform', optimizer = 'adam',  learning_rate=0.001, n_epochs=40,
         test_every=100, minibatch_size=100, encoder_hidden_sizes=[200, 200], decoder_hidden_sizes=[200, 200],
-        hidden_activation='relu', plot_grid_size=10, plot_n_samples = 20):
+        hidden_activation='relu', plot_grid_size=10, plot_n_samples = 20, save_plots = False, show_plots = False):
     """
     Train a variational autoencoder on MNIST and plot the results.
 
@@ -322,18 +322,13 @@ def train_vae_on_mnist(z_dim=2, kernel_initializer='glorot_uniform', optimizer =
 
     model = VariationalAutoencoder(x_minibatch, z_dim, encoder_hidden_sizes, decoder_hidden_sizes, kernel_initializer)
     loss = model.loss
+    sample_Z_op = model.sample_Z(plot_n_samples) #Sample Z
+    sample_X_op = model.sample_X()  #Sample X
 
     if optimizer == "adam":
         train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
     else:
-        train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-
-    # Define the optimizer
-    # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-    # grads_and_vars = optimizer.compute_gradients(model.loss)
-    # grads, variables = zip(*grads_and_vars)
-    # grads_clipped, _ = tf.clip_by_global_norm(grads, clip_norm=10)
-    # train_step = optimizer.apply_gradients(zip(grads_clipped, variables))
+        train_step = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(loss)
 
     # Setup summaries and writers
     log_path = './summaries/VAE_' + time.strftime("%Y%m%d-%H%M")
@@ -343,7 +338,9 @@ def train_vae_on_mnist(z_dim=2, kernel_initializer='glorot_uniform', optimizer =
     writer = tf.summary.FileWriter(log_path)
     train_writer = tf.summary.FileWriter(log_path + '/train')
 
-    loss_sum = tf.summary.scalar('Loss', loss)
+    ELBO_summ = tf.summary.scalar('ELBO', -loss)
+
+
 
     with tf.Session() as sess:
         sess.run(train_iterator.initializer)
@@ -352,16 +349,15 @@ def train_vae_on_mnist(z_dim=2, kernel_initializer='glorot_uniform', optimizer =
 
         writer.add_graph(sess.graph)
 
+        plot_checkpoints = [100, 11000, n_steps - 1]
+
+
         for i in range(n_steps):
             # Only for time measurement of step through network
             t1 = time.time()
 
-            # [_, sum] = sess.run([train_step, merged_summary])
-            # writer.add_summary(sum, global_step=i)
-
-
+            #Train current minibatch
             [_] = sess.run([train_step])
-
 
             # Only for time measurement of step through network
             t2 = time.time()
@@ -371,53 +367,62 @@ def train_vae_on_mnist(z_dim=2, kernel_initializer='glorot_uniform', optimizer =
 
                 test_size = x_test.shape[0]
 
-                test_loss = sess.run(loss, feed_dict={x_minibatch: x_test[:test_size]})
+                test_ELBO = -sess.run(loss, feed_dict={x_minibatch: x_test[:test_size]})
 
-                train_loss = sess.run(loss, feed_dict={x_minibatch: x_train[:test_size]})
+                train_ELBO = -sess.run(loss, feed_dict={x_minibatch: x_train[:test_size]})
 
                 print("[{}] Train Step {:04d}/{:04d}, "
-                      "Examples/Sec = {:.2f}, Loss = {} | {}".format(
+                      "Examples/Sec = {:.2f}, ELBO = {:.8f} | {:.8f}".format(
                     datetime.now().strftime("%Y-%m-%d %H:%M"), i,
                     n_steps,  examples_per_second,
-                    train_loss, test_loss))
+                    train_ELBO, test_ELBO))
 
                 # write train and test loss
-                train_writer.add_summary(sess.run(loss_sum, feed_dict={loss: train_loss}), global_step=i)
+                train_writer.add_summary(sess.run(ELBO_summ, feed_dict={loss: -train_ELBO}), global_step=i)
 
-                writer.add_summary(sess.run(loss_sum, feed_dict={loss: test_loss}), global_step=i)
+                writer.add_summary(sess.run(ELBO_summ, feed_dict={loss: -test_ELBO}), global_step=i)
+
+            #Sample during training
+            if i in plot_checkpoints:
+
+                # Sample from the model
+                [z_samples] = sess.run([sample_Z_op]) # sample Z
+                [x_samples] = sess.run([sample_X_op], feed_dict={model.z: z_samples}) # Sample X given Z
+
+                [mean_x_samples] = sess.run([model.y], feed_dict={model.z: z_samples}) # Sample mean X given Z
+
+                # Plot samples
+                img = merge_images(x_samples, size=(2, plot_n_samples//2))
+                f = plt.figure()
+                plt.imshow(img, cmap='gray')
+                plt.axis("off")
+                if save_plots:
+                    f.savefig("./samples_{}.png".format(i))
+
+                # Plot mean samples
+                img = merge_images(mean_x_samples, size=(2, plot_n_samples//2))
+                f = plt.figure()
+                plt.imshow(img, cmap='gray')
+                plt.axis("off")
+                if save_plots:
+                    f.savefig("./mean_samples_{}.png".format(i))
 
 
-        sample_Z_op = model.sample_Z(10)
-        sample_X_op = model.sample_X()
 
-        [z_samples] = sess.run([sample_Z_op])
-        [x_samples] = sess.run([sample_X_op], feed_dict={model.z: z_samples})
+        #Plot manifold
+        f = plt.figure()
+        plot_manifold(sess, model, z_lim = 2, manifold_size = plot_grid_size)
+        if save_plots:
+            f.savefig("./manifold.png")
 
-
-        [mean_x_samples] = sess.run([model.y], feed_dict={model.z: z_samples})
-
-        labels = ["z = {}".format(z) for z in z_samples]
-        # subplot_digits(x_samples, labels, shape = (5,2))
-        img = merge_images(x_samples, size = (2,5))
-        plt.figure(1)
-        plt.imshow(img, cmap = 'gray')
-        plt.axis("off")
-
-
-        # subplot_digits(mean_x_samples, labels, shape = (5,2))
-        img = merge_images(mean_x_samples, size=(2, 5))
-        plt.figure(2)
-        plt.imshow(img, cmap='gray')
-        plt.axis("off")
-
-
-        plt.figure(3)
-        plot_manifold(sess, model, z_lim = 2, manifold_size = 20)
-
-        plt.show()
+        if show_plots:
+            plt.show()
 
 
 
 
 if __name__ == '__main__':
-    train_vae_on_mnist(n_epochs = 1)
+
+    if not tf.gfile.Exists('./summaries'):
+        tf.gfile.MakeDirs('./summaries')
+    train_vae_on_mnist(n_epochs = 50, plot_n_samples = 20, plot_grid_size=10, save_plots = False, show_plots = True)
